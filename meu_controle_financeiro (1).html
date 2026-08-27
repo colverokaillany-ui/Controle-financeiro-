@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Meu Controle Financeiro</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --text:#20242a; --muted:#69707a; --border:#e1e4e8; --accent:#3559e0; --green:#18864b; --red:#c93434; --yellow:#a66a00; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:18px 24px;position:sticky;top:0;z-index:10}
+  header .top{max-width:1200px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between}
+  h1{font-size:22px;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .month{display:flex;align-items:center;gap:8px}
+  select,input,button{font:inherit}
+  select,input{border:1px solid var(--border);border-radius:8px;padding:9px 10px;background:#fff}
+  button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:600}
+  button.secondary{background:#eef1f7;color:#273142}.danger{background:#fff0f0!important;color:var(--red)!important}
+  main{max-width:1200px;margin:24px auto;padding:0 18px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:17px}
+  .label{font-size:13px;color:var(--muted)}.value{font-size:24px;font-weight:700;margin-top:7px}
+  .positive{color:var(--green)}.negative{color:var(--red)}.warning{color:var(--yellow)}
+  .section{margin-top:22px}.section h2{font-size:18px;margin:0 0 12px}
+  .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .rows{display:flex;flex-direction:column;gap:9px}
+  .row{display:grid;grid-template-columns:1.5fr 1fr 110px 120px 90px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  .row.cardrow{grid-template-columns:1.5fr 1fr 1fr 110px 120px 90px}
+  .row .name{font-weight:600}.small{font-size:12px;color:var(--muted)}
+  .status{font-size:12px;font-weight:700}
+  .paid{color:var(--green)}.pending{color:var(--red)}
+  .formbox{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:12px}
+  .formbox.cards{grid-template-columns:1.2fr 1fr 1fr 1fr auto}
+  .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:9px;background:#fff}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .note{font-size:12px;color:var(--muted);line-height:1.5}
+  .footer{margin:28px 0;color:var(--muted);font-size:12px;text-align:center}
+
+  .charts{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+  .chart-wrap{position:relative;height:280px}
+  canvas{width:100%;height:100%;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .investment-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f7f8fb;border-radius:9px;margin-bottom:10px}
+  .investment-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 100px 80px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  .muted-box{background:#f7f8fb;border-radius:9px;padding:12px;font-size:13px;line-height:1.5}
+  @media(max-width:850px){.charts{grid-template-columns:1fr}.investment-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.row,.row.cardrow{grid-template-columns:1fr 1fr}.formbox,.formbox.cards{grid-template-columns:1fr 1fr}.formbox button,.formbox.cards button{grid-column:1/-1}}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}header .top{align-items:flex-start;flex-direction:column}.month{width:100%}.month select{flex:1}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div><h1>Meu Controle Financeiro</h1><div class="sub">Salário + vale convertido + receitas extras − contas − cartões</div></div>
+    <div class="month"><button class="secondary" onclick="changeMonth(-1)">‹</button><select id="month"></select><button class="secondary" onclick="changeMonth(1)">›</button></div>
+  </div>
+</header>
+
+<main>
+  <div class="section card" id="syncCard">
+    <div class="section-head"><h2>Sincronização entre dispositivos</h2><span id="syncStatus" class="small">Não conectado</span></div>
+    <div id="loginArea">
+      <div class="formbox" style="grid-template-columns:1fr 1fr auto">
+        <input id="loginEmail" type="email" placeholder="Seu e-mail">
+        <input id="loginPassword" type="password" placeholder="Senha">
+        <button onclick="login()">Entrar</button>
+      </div>
+      <div class="note">Depois de configurar o banco online, use o mesmo login no computador e no celular. As alterações aparecerão nos dispositivos automaticamente.</div>
+    </div>
+    <div id="loggedArea" style="display:none">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <div class="small">Conta conectada: <b id="loggedEmail"></b></div>
+        <button class="secondary" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="label">Receita prevista</div><div id="income" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Contas + cartões</div><div id="expenses" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Saldo previsto</div><div id="balance" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Falta para fechar o mês</div><div id="missing" class="value">R$ 0,00</div></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>1. Renda do mês</h2></div>
+    <div class="formbox" style="grid-template-columns:1fr 1fr 1fr 1fr auto">
+      <input id="salary" type="number" step="0.01" placeholder="Salário fixo">
+      <input id="vale" type="number" step="0.01" placeholder="Vale / benefício">
+      <input id="valeConvert" type="number" step="0.01" placeholder="Valor que vira dinheiro">
+      <input id="otherIncome" type="number" step="0.01" placeholder="Outras receitas">
+      <button onclick="saveIncome()">Salvar</button>
+    </div>
+    <div class="note">O campo “vale / benefício” registra o valor recebido. “Valor que vira dinheiro” é o quanto efetivamente será convertido em dinheiro e entrará no orçamento. Outras receitas são somadas às receitas extras cadastradas abaixo.</div>
+  </div>
+
+  <div class="section two">
+    <div class="card">
+      <div class="section-head"><h2>2. Valores a receber</h2></div>
+      <div class="formbox" style="grid-template-columns:1fr 1fr auto">
+        <input id="recvName" placeholder="Ex.: Namorado">
+        <input id="recvValue" type="number" step="0.01" placeholder="Valor">
+        <button onclick="addReceivable()">Adicionar</button>
+      </div>
+      <div id="receivables" class="rows"></div>
+      <div class="note" style="margin-top:10px">Só entra no saldo disponível quando você marcar como recebido.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><h2>3. Contas fixas</h2></div>
+      <div class="formbox" style="grid-template-columns:1.4fr 1fr 1fr auto">
+        <input id="billName" placeholder="Ex.: Consórcio">
+        <input id="billValue" type="number" step="0.01" placeholder="Valor">
+        <input id="billDue" type="number" min="1" max="31" placeholder="Dia">
+        <button onclick="addBill()">Adicionar</button>
+      </div>
+      <div id="bills" class="rows"></div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>4. Faturas dos cartões</h2><span class="small">Você pode cadastrar quantos cartões quiser nas 3 instituições.</span></div>
+    <div class="formbox cards">
+      <input id="cardBank" placeholder="Instituição financeira">
+      <input id="cardName" placeholder="Ex.: Visa / final 1234">
+      <input id="cardValue" type="number" step="0.01" placeholder="Fatura">
+      <input id="cardDue" type="number" min="1" max="31" placeholder="Vencimento">
+      <button onclick="addCard()">Adicionar</button>
+    </div>
+    <div id="cards" class="rows"></div>
+  </div>
+
+  <div class="section charts">
+    <div class="card">
+      <div class="section-head"><h2>5. Visão do mês</h2><span class="small">Receitas x compromissos</span></div>
+      <div class="chart-wrap"><canvas id="cashChart"></canvas></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#3559e0"></i>Receitas</span>
+        <span><i class="dot" style="background:#c93434"></i>Contas + cartões</span>
+        <span><i class="dot" style="background:#18864b"></i>Saldo</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-head"><h2>Distribuição das despesas</h2><span class="small">Onde seu dinheiro está comprometido</span></div>
+      <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#7a5af8"></i>Contas fixas</span>
+        <span><i class="dot" style="background:#ff8a4c"></i>Cartões</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>6. Investimentos</h2><span class="small">Valores investidos ficam separados das despesas do mês.</span></div>
+    <div class="investment-total"><span>Total investido no mês</span><b id="investTotal">R$ 0,00</b></div>
+    <div class="formbox" style="grid-template-columns:1.3fr 1fr 1fr 1fr auto">
+      <input id="invName" placeholder="Ex.: Reserva de emergência">
+      <input id="invType" placeholder="Tipo: CDB, fundo, ações...">
+      <input id="invValue" type="number" step="0.01" placeholder="Valor aplicado">
+      <input id="invDate" type="date">
+      <button onclick="addInvestment()">Adicionar</button>
+    </div>
+    <div id="investments" class="rows"></div>
+    <div class="muted-box" style="margin-top:12px">
+      O investimento não é tratado como despesa comum: ele será mostrado separadamente para você acompanhar quanto conseguiu direcionar para seu patrimônio. Em uma próxima evolução, dá para controlar rentabilidade, aportes recorrentes e saldo acumulado por investimento.
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>7. Resumo do mês</h2><button class="danger" onclick="clearMonth()">Limpar mês</button></div>
+    <div id="summary" class="note"></div>
+  </div>
+
+  <div class="footer">Com o banco online configurado, os dados ficam sincronizados entre seus dispositivos. Sem essa configuração, o app funciona apenas localmente no navegador.</div>
+</main>
+
+<script>
+const KEY='controle_financeiro_v2';
+const SUPABASE_URL = 'https://rsqavveigkdysxcmcioa.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_6rsJ3AszRnTqSJ74KbxB-w_BOIFntzf';
+const cloudReady = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+const sb = cloudReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let db=JSON.parse(localStorage.getItem(KEY)||'{}');
+let current=new Date().toISOString().slice(0,7);
+let cloudChannel=null;
+
+const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const monthName=m=>new Date(m+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+function emptyMonth(){return {salary:0,vale:0,valeConvert:0,otherIncome:0,receivables:[],bills:[],cards:[],investments:[]}}
+function data(){ if(!db[current]) db[current]=emptyMonth(); if(!db[current].investments) db[current].investments=[]; return db[current]; }
+
+function setSyncStatus(text,good=false){
+  const el=document.getElementById('syncStatus'); if(!el) return;
+  el.textContent=text; el.className='small '+(good?'positive':'warning');
+}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(db));}
+async function save(){
+  saveLocal(); render();
+  if(cloudReady){
+    const {data:{user}}=await sb.auth.getUser();
+    if(user){
+      const payload={user_id:user.id, month_key:current, data:db[current], updated_at:new Date().toISOString()};
+      const {error}=await sb.from('finance_months').upsert(payload,{onConflict:'user_id,month_key'});
+      if(error){ console.error(error); setSyncStatus('Erro ao sincronizar'); }
+      else setSyncStatus('Sincronizado',true);
+    }
+  }
+}
+async function loadCloud(){
+  if(!cloudReady) return;
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){setSyncStatus('Não conectado'); return;}
+  const {data:rows,error}=await sb.from('finance_months').select('month_key,data').eq('user_id',user.id);
+  if(error){console.error(error);setSyncStatus('Erro ao carregar');return}
+  if(rows && rows.length){
+    rows.forEach(r=>db[r.month_key]=r.data);
+    saveLocal(); render();
+  }
+  setSyncStatus('Sincronizado',true);
+  subscribeRealtime(user.id);
+}
+function subscribeRealtime(userId){
+  if(!cloudReady) return;
+  if(cloudChannel) sb.removeChannel(cloudChannel);
+  cloudChannel=sb.channel('finance-sync-'+userId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'finance_months',filter:'user_id=eq.'+userId},payload=>{
+      const row=payload.new || payload.old;
+      if(payload.eventType==='DELETE'){delete db[row.month_key];}
+      else if(row && row.month_key){db[row.month_key]=row.data;}
+      saveLocal(); render(); setSyncStatus('Atualizado em tempo real',true);
+    })
+    .subscribe();
+}
+async function login(){
+  if(!cloudReady){alert('O banco online ainda não foi configurado.');return}
+  const email=document.getElementById('loginEmail').value.trim(), password=document.getElementById('loginPassword').value;
+  if(!email||!password){alert('Informe e-mail e senha.');return}
+  setSyncStatus('Conectando...');
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){alert(error.message);setSyncStatus('Falha no login');return}
+  document.getElementById('loginArea').style.display='none';
+  document.getElementById('loggedArea').style.display='block';
+  document.getElementById('loggedEmail').textContent=data.user.email;
+  await loadCloud();
+}
+async function logout(){
+  if(cloudReady) await sb.auth.signOut();
+  if(cloudChannel){sb.removeChannel(cloudChannel);cloudChannel=null;}
+  document.getElementById('loginArea').style.display='block';
+  document.getElementById('loggedArea').style.display='none';
+  setSyncStatus('Não conectado');
+}
+async function initAuth(){
+  if(!cloudReady){setSyncStatus('Configure o banco online');return}
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){
+    document.getElementById('loginArea').style.display='none';
+    document.getElementById('loggedArea').style.display='block';
+    document.getElementById('loggedEmail').textContent=session.user.email;
+    await loadCloud();
+  }
+  sb.auth.onAuthStateChange(async (_event,session)=>{
+    if(session){
+      document.getElementById('loginArea').style.display='none';
+      document.getElementById('loggedArea').style.display='block';
+      document.getElementById('loggedEmail').textContent=session.user.email;
+      await loadCloud();
+    }
+  });
+}
+
+function setupMonths(){
+ const s=document.getElementById('month');s.innerHTML='';
+ const base=new Date(current+'-01T12:00:00');
+ for(let i=-12;i<=12;i++){let d=new Date(base);d.setMonth(d.getMonth()+i);let m=d.toISOString().slice(0,7);let o=document.createElement('option');o.value=m;o.textContent=monthName(m);if(m===current)o.selected=true;s.appendChild(o)}
+ s.onchange=()=>{current=s.value;render()}
+}
+function changeMonth(n){let d=new Date(current+'-01T12:00:00');d.setMonth(d.getMonth()+n);current=d.toISOString().slice(0,7);setupMonths();render()}
+function saveIncome(){let d=data();d.salary=+document.getElementById('salary').value||0;d.vale=+document.getElementById('vale').value||0;d.valeConvert=+document.getElementById('valeConvert').value||0;d.otherIncome=+document.getElementById('otherIncome').value||0;save()}
+function addReceivable(){let n=document.getElementById('recvName').value.trim(),v=+document.getElementById('recvValue').value||0;if(!n||!v)return;data().receivables.push({id:id(),name:n,value:v,received:false});document.getElementById('recvName').value='';document.getElementById('recvValue').value='';save()}
+function addBill(){let n=document.getElementById('billName').value.trim(),v=+document.getElementById('billValue').value||0,d=+document.getElementById('billDue').value||0;if(!n||!v)return;data().bills.push({id:id(),name:n,value:v,due:d,paid:false});document.getElementById('billName').value='';document.getElementById('billValue').value='';document.getElementById('billDue').value='';save()}
+function addCard(){let b=document.getElementById('cardBank').value.trim(),n=document.getElementById('cardName').value.trim(),v=+document.getElementById('cardValue').value||0,d=+document.getElementById('cardDue').value||0;if(!b||!n||!v)return;data().cards.push({id:id(),bank:b,name:n,value:v,due:d,paid:false});document.getElementById('cardBank').value='';document.getElementById('cardName').value='';document.getElementById('cardValue').value='';document.getElementById('cardDue').value='';save()}
+function addInvestment(){let n=document.getElementById('invName').value.trim(),t=document.getElementById('invType').value.trim(),v=+document.getElementById('invValue').value||0,dt=document.getElementById('invDate').value||current+'-01';if(!n||!v)return;data().investments.push({id:id(),name:n,type:t,value:v,date:dt});document.getElementById('invName').value='';document.getElementById('invType').value='';document.getElementById('invValue').value='';document.getElementById('invDate').value='';save()} 
+function toggle(type,i){data()[type][i].paid=!data()[type][i].paid;save()}
+function toggleRecv(i){data().receivables[i].received=!data().receivables[i].received;save()}
+function del(type,i){data()[type].splice(i,1);save()}
+async function clearMonth(){if(!confirm('Apagar todos os dados deste mês?'))return; delete db[current]; saveLocal(); render(); if(cloudReady){const {data:{user}}=await sb.auth.getUser(); if(user){await sb.from('finance_months').delete().eq('user_id',user.id).eq('month_key',current);}}}
+
+function drawBarChart(canvas, values, labels){
+  const ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height, pad=34, max=Math.max(...values,1), bw=Math.min(70,(w-pad*2)/values.length/1.7);
+  ctx.clearRect(0,0,w,h); ctx.strokeStyle='#d8dce3'; ctx.fillStyle='#69707a'; ctx.font='12px Arial'; ctx.textAlign='center';
+  ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-pad,h-pad);ctx.stroke();
+  values.forEach((v,i)=>{let x=pad+(i+.5)*(w-pad*2)/values.length, bh=(h-pad*2)*(v/max), y=h-pad-bh; ctx.fillStyle=['#3559e0','#c93434','#18864b'][i];ctx.fillRect(x-bw/2,y,bw,bh);ctx.fillStyle='#20242a';ctx.fillText(money(v),x,Math.max(14,y-7));ctx.fillStyle='#69707a';ctx.fillText(labels[i],x,h-12)});
+}
+function drawPieChart(canvas, values, labels){
+  const ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height,cx=w/2,cy=h/2-5,r=Math.min(w,h)*.32,total=values.reduce((a,b)=>a+b,0);ctx.clearRect(0,0,w,h);
+  if(!total){ctx.fillStyle='#69707a';ctx.font='13px Arial';ctx.textAlign='center';ctx.fillText('Sem despesas cadastradas',cx,cy);return}
+  const colors=['#7a5af8','#ff8a4c'];let a=-Math.PI/2;
+  values.forEach((v,i)=>{let na=a+(v/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,na);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();a=na});
+  ctx.beginPath();ctx.arc(cx,cy,r*.52,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#20242a';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText(money(total),cx,cy+5);
+}
+function drawCharts(d){
+  const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
+  const income=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
+  const bills=d.bills.reduce((s,x)=>s+x.value,0), cards=d.cards.reduce((s,x)=>s+x.value,0), exp=bills+cards, inv=d.investments.reduce((s,x)=>s+x.value,0);
+  drawBarChart(document.getElementById('cashChart'),[income,exp,Math.max(income-exp,0)],['Receitas','Compromissos','Saldo']);
+  drawPieChart(document.getElementById('expenseChart'),[bills,cards],['Contas fixas','Cartões']);
+  document.getElementById('investTotal').textContent=money(inv);
+}
+window.addEventListener('resize',()=>drawCharts(data()));
+
+function render(){
+ const d=data();
+ document.getElementById('salary').value=d.salary||'';
+ document.getElementById('vale').value=d.vale||'';
+ document.getElementById('valeConvert').value=d.valeConvert||'';
+ document.getElementById('otherIncome').value=d.otherIncome||'';
+ const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
+ const base=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
+ const bills=d.bills.reduce((s,x)=>s+x.value,0),cards=d.cards.reduce((s,x)=>s+x.value,0),exp=bills+cards,bal=base-exp,missing=Math.max(0,-bal);
+ const inc=document.getElementById('income');inc.textContent=money(base);inc.className='value '+(base?'positive':'');
+ document.getElementById('expenses').textContent=money(exp);
+ const bc=document.getElementById('balance');bc.textContent=money(bal);bc.className='value '+(bal>=0?'positive':'negative');
+ const mi=document.getElementById('missing');mi.textContent=money(missing);mi.className='value '+(missing?'negative':'positive');
+ document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 70px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
+ document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 70px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
+ document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
+ const fixedBase=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0), pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0);
+
+ document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
+ drawCharts(d);
+ document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Total de contas e faturas: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar: ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+setupMonths();render();initAuth();
+</script>
+</body>
+</html>
