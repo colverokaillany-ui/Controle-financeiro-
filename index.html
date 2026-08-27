@@ -45,6 +45,13 @@
   .investment-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f7f8fb;border-radius:9px;margin-bottom:10px}
   .investment-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 100px 80px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
   .muted-box{background:#f7f8fb;border-radius:9px;padding:12px;font-size:13px;line-height:1.5}
+  .commitment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .commitment-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:#fff}
+  .progress{height:10px;background:#edf0f4;border-radius:999px;overflow:hidden;margin-top:9px}
+  .progress>div{height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .25s}
+  .percent{font-size:22px;font-weight:700;margin-top:6px}
+  .variable-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 90px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  @media(max-width:850px){.commitment-grid{grid-template-columns:1fr}.variable-row{grid-template-columns:1fr 1fr}}
   @media(max-width:850px){.charts{grid-template-columns:1fr}.investment-row{grid-template-columns:1fr 1fr}}
   @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.row,.row.cardrow{grid-template-columns:1fr 1fr}.formbox,.formbox.cards{grid-template-columns:1fr 1fr}.formbox button,.formbox.cards button{grid-column:1/-1}}
   @media(max-width:520px){.grid{grid-template-columns:1fr}header .top{align-items:flex-start;flex-direction:column}.month{width:100%}.month select{flex:1}}
@@ -131,9 +138,31 @@
     <div id="cards" class="rows"></div>
   </div>
 
+  <div class="section card">
+    <div class="section-head"><h2>5. Despesas variáveis</h2><span class="small">Gastos que não são fixos: Pix, débito, dinheiro etc.</span></div>
+    <div class="formbox" style="grid-template-columns:1.2fr 1fr 1fr 1fr auto">
+      <input id="varName" placeholder="Ex.: Mercado, gasolina, lazer...">
+      <input id="varCategory" placeholder="Categoria">
+      <input id="varValue" type="number" step="0.01" placeholder="Valor">
+      <select id="varMethod"><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Dinheiro">Dinheiro</option><option value="Outro">Outro</option></select>
+      <button onclick="addVariable()">Adicionar</button>
+    </div>
+    <div id="variables" class="rows"></div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>6. Quanto da minha renda já está comprometido?</h2><span class="small">Percentuais calculados sobre o salário e sobre a renda total do mês.</span></div>
+    <div class="commitment-grid">
+      <div class="commitment-card"><div class="label">Comprometimento do salário</div><div id="salaryPct" class="percent">0%</div><div class="small" id="salaryPctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="salaryBar"></div></div></div>
+      <div class="commitment-card"><div class="label">Comprometimento da renda total</div><div id="incomePct" class="percent">0%</div><div class="small" id="incomePctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="incomeBar"></div></div></div>
+      <div class="commitment-card"><div class="label">Investido do salário</div><div id="investPct" class="percent">0%</div><div class="small" id="investPctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="investBar"></div></div></div>
+    </div>
+    <div class="muted-box" style="margin-top:12px">Aqui você consegue visualizar rapidamente quanto do seu salário já está comprometido com contas, cartões e despesas variáveis. As receitas extras recebidas aumentam sua renda disponível, mas não alteram o percentual calculado especificamente sobre o salário.</div>
+  </div>
+
   <div class="section charts">
     <div class="card">
-      <div class="section-head"><h2>5. Visão do mês</h2><span class="small">Receitas x compromissos</span></div>
+      <div class="section-head"><h2>7. Visão do mês</h2><span class="small">Receitas x compromissos</span></div>
       <div class="chart-wrap"><canvas id="cashChart"></canvas></div>
       <div class="legend">
         <span><i class="dot" style="background:#3559e0"></i>Receitas</span>
@@ -147,12 +176,13 @@
       <div class="legend">
         <span><i class="dot" style="background:#7a5af8"></i>Contas fixas</span>
         <span><i class="dot" style="background:#ff8a4c"></i>Cartões</span>
+        <span><i class="dot" style="background:#2f9e44"></i>Variáveis</span>
       </div>
     </div>
   </div>
 
   <div class="section card">
-    <div class="section-head"><h2>6. Investimentos</h2><span class="small">Valores investidos ficam separados das despesas do mês.</span></div>
+    <div class="section-head"><h2>8. Investimentos</h2><span class="small">Valores investidos ficam separados das despesas do mês.</span></div>
     <div class="investment-total"><span>Total investido no mês</span><b id="investTotal">R$ 0,00</b></div>
     <div class="formbox" style="grid-template-columns:1.3fr 1fr 1fr 1fr auto">
       <input id="invName" placeholder="Ex.: Reserva de emergência">
@@ -168,7 +198,7 @@
   </div>
 
   <div class="section card">
-    <div class="section-head"><h2>7. Resumo do mês</h2><button class="danger" onclick="clearMonth()">Limpar mês</button></div>
+    <div class="section-head"><h2>9. Resumo do mês</h2><button class="danger" onclick="clearMonth()">Limpar mês</button></div>
     <div id="summary" class="note"></div>
   </div>
 
@@ -189,8 +219,8 @@ let cloudChannel=null;
 const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
 const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const monthName=m=>new Date(m+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-function emptyMonth(){return {salary:0,vale:0,valeConvert:0,otherIncome:0,receivables:[],bills:[],cards:[],investments:[]}}
-function data(){ if(!db[current]) db[current]=emptyMonth(); if(!db[current].investments) db[current].investments=[]; return db[current]; }
+function emptyMonth(){return {salary:0,vale:0,valeConvert:0,otherIncome:0,receivables:[],bills:[],cards:[],variables:[],investments:[]}}
+function data(){ if(!db[current]) db[current]=emptyMonth(); if(!db[current].investments) db[current].investments=[]; if(!db[current].variables) db[current].variables=[]; return db[current]; }
 
 function setSyncStatus(text,good=false){
   const el=document.getElementById('syncStatus'); if(!el) return;
@@ -283,6 +313,7 @@ function saveIncome(){let d=data();d.salary=+document.getElementById('salary').v
 function addReceivable(){let n=document.getElementById('recvName').value.trim(),v=+document.getElementById('recvValue').value||0;if(!n||!v)return;data().receivables.push({id:id(),name:n,value:v,received:false});document.getElementById('recvName').value='';document.getElementById('recvValue').value='';save()}
 function addBill(){let n=document.getElementById('billName').value.trim(),v=+document.getElementById('billValue').value||0,d=+document.getElementById('billDue').value||0;if(!n||!v)return;data().bills.push({id:id(),name:n,value:v,due:d,paid:false});document.getElementById('billName').value='';document.getElementById('billValue').value='';document.getElementById('billDue').value='';save()}
 function addCard(){let b=document.getElementById('cardBank').value.trim(),n=document.getElementById('cardName').value.trim(),v=+document.getElementById('cardValue').value||0,d=+document.getElementById('cardDue').value||0;if(!b||!n||!v)return;data().cards.push({id:id(),bank:b,name:n,value:v,due:d,paid:false});document.getElementById('cardBank').value='';document.getElementById('cardName').value='';document.getElementById('cardValue').value='';document.getElementById('cardDue').value='';save()}
+function addVariable(){let n=document.getElementById('varName').value.trim(),c=document.getElementById('varCategory').value.trim(),v=+document.getElementById('varValue').value||0,m=document.getElementById('varMethod').value;if(!n||!v)return;data().variables.push({id:id(),name:n,category:c,value:v,method:m});document.getElementById('varName').value='';document.getElementById('varCategory').value='';document.getElementById('varValue').value='';document.getElementById('varMethod').value='Pix';save()}
 function addInvestment(){let n=document.getElementById('invName').value.trim(),t=document.getElementById('invType').value.trim(),v=+document.getElementById('invValue').value||0,dt=document.getElementById('invDate').value||current+'-01';if(!n||!v)return;data().investments.push({id:id(),name:n,type:t,value:v,date:dt});document.getElementById('invName').value='';document.getElementById('invType').value='';document.getElementById('invValue').value='';document.getElementById('invDate').value='';save()} 
 function toggle(type,i){data()[type][i].paid=!data()[type][i].paid;save()}
 function toggleRecv(i){data().receivables[i].received=!data().receivables[i].received;save()}
@@ -302,7 +333,7 @@ function drawPieChart(canvas, values, labels){
   canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
   const w=rect.width,h=rect.height,cx=w/2,cy=h/2-5,r=Math.min(w,h)*.32,total=values.reduce((a,b)=>a+b,0);ctx.clearRect(0,0,w,h);
   if(!total){ctx.fillStyle='#69707a';ctx.font='13px Arial';ctx.textAlign='center';ctx.fillText('Sem despesas cadastradas',cx,cy);return}
-  const colors=['#7a5af8','#ff8a4c'];let a=-Math.PI/2;
+  const colors=['#7a5af8','#ff8a4c','#2f9e44'];let a=-Math.PI/2;
   values.forEach((v,i)=>{let na=a+(v/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,na);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();a=na});
   ctx.beginPath();ctx.arc(cx,cy,r*.52,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
   ctx.fillStyle='#20242a';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText(money(total),cx,cy+5);
@@ -310,10 +341,27 @@ function drawPieChart(canvas, values, labels){
 function drawCharts(d){
   const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
   const income=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
-  const bills=d.bills.reduce((s,x)=>s+x.value,0), cards=d.cards.reduce((s,x)=>s+x.value,0), exp=bills+cards, inv=d.investments.reduce((s,x)=>s+x.value,0);
+  const bills=d.bills.reduce((s,x)=>s+x.value,0), cards=d.cards.reduce((s,x)=>s+x.value,0), vars=(d.variables||[]).reduce((s,x)=>s+x.value,0), exp=bills+cards+vars, inv=d.investments.reduce((s,x)=>s+x.value,0);
   drawBarChart(document.getElementById('cashChart'),[income,exp,Math.max(income-exp,0)],['Receitas','Compromissos','Saldo']);
-  drawPieChart(document.getElementById('expenseChart'),[bills,cards],['Contas fixas','Cartões']);
+  drawPieChart(document.getElementById('expenseChart'),[bills,cards,vars],['Contas fixas','Cartões','Variáveis']);
   document.getElementById('investTotal').textContent=money(inv);
+  updateCommitment(d,income,bills+cards+vars,inv);
+}
+function updateCommitment(d,income,expenses,inv){
+  const salary=Number(d.salary)||0;
+  const salaryPct=salary>0?(expenses/salary)*100:0;
+  const incomePct=income>0?(expenses/income)*100:0;
+  const investPct=salary>0?(inv/salary)*100:0;
+  const fmtPct=v=>Math.round(v*10)/10;
+  document.getElementById('salaryPct').textContent=fmtPct(salaryPct)+'%';
+  document.getElementById('incomePct').textContent=fmtPct(incomePct)+'%';
+  document.getElementById('investPct').textContent=fmtPct(investPct)+'%';
+  document.getElementById('salaryPctText').textContent=money(expenses)+' de '+money(salary);
+  document.getElementById('incomePctText').textContent=money(expenses)+' de '+money(income);
+  document.getElementById('investPctText').textContent=money(inv)+' de '+money(salary);
+  document.getElementById('salaryBar').style.width=Math.min(100,Math.max(0,salaryPct))+'%';
+  document.getElementById('incomeBar').style.width=Math.min(100,Math.max(0,incomePct))+'%';
+  document.getElementById('investBar').style.width=Math.min(100,Math.max(0,investPct))+'%';
 }
 window.addEventListener('resize',()=>drawCharts(data()));
 
@@ -325,7 +373,7 @@ function render(){
  document.getElementById('otherIncome').value=d.otherIncome||'';
  const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
  const base=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
- const bills=d.bills.reduce((s,x)=>s+x.value,0),cards=d.cards.reduce((s,x)=>s+x.value,0),exp=bills+cards,bal=base-exp,missing=Math.max(0,-bal);
+ const bills=d.bills.reduce((s,x)=>s+x.value,0),cards=d.cards.reduce((s,x)=>s+x.value,0),vars=(d.variables||[]).reduce((s,x)=>s+x.value,0),exp=bills+cards+vars,bal=base-exp,missing=Math.max(0,-bal);
  const inc=document.getElementById('income');inc.textContent=money(base);inc.className='value '+(base?'positive':'');
  document.getElementById('expenses').textContent=money(exp);
  const bc=document.getElementById('balance');bc.textContent=money(bal);bc.className='value '+(bal>=0?'positive':'negative');
@@ -333,11 +381,11 @@ function render(){
  document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 70px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
  document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 70px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
  document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
- const fixedBase=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0), pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0);
-
+ document.getElementById('variables').innerHTML=d.variables.length?d.variables.map((x,i)=>`<div class="variable-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.category||'Sem categoria')}</div></div><div>${money(x.value)}</div><div class="small">${esc(x.method)}</div><div></div><button class="danger" onclick="del('variables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma despesa variável cadastrada.</div>';
+ const pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+(d.variables||[]).reduce((s,x)=>s+x.value,0), inv=d.investments.reduce((s,x)=>s+x.value,0);
  document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
  drawCharts(d);
- document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Total de contas e faturas: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar: ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
+ document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Contas fixas: ${money(bills)} · Cartões: ${money(cards)} · Despesas variáveis: ${money(vars)} · Investimentos: ${money(inv)}<br>Total de compromissos: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar/contabilizar: ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 setupMonths();render();initAuth();
