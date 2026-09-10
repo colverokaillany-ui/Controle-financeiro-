@@ -2,2005 +2,393 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<title>Agenda da Manicure</title>
-
+<title>Meu Controle Financeiro</title>
 <style>
-:root{
-  --bg:#f6f7fb;
-  --card:#fff;
-  --text:#252b36;
-  --muted:#778092;
-  --line:#e5e7ee;
-  --accent:#d95f8d;
-  --accent2:#f8e8ef;
-  --green:#27885d;
-  --red:#c94b4b;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text)
-}
-.app{display:flex;min-height:100vh}
-.side{
-  width:230px;
-  background:#fff;
-  border-right:1px solid var(--line);
-  padding:22px 14px;
-  position:fixed;
-  height:100vh;
-  left:0;
-  top:0
-}
-.brand{
-  font-size:20px;
-  font-weight:800;
-  padding:4px 10px 22px
-}
-.brand small{
-  display:block;
-  font-size:12px;
-  font-weight:400;
-  color:var(--muted);
-  margin-top:5px
-}
-.nav{display:flex;flex-direction:column;gap:6px}
-.nav button{
-  border:0;
-  background:transparent;
-  color:#596174;
-  padding:12px 12px;
-  border-radius:10px;
-  text-align:left;
-  cursor:pointer;
-  font-size:15px;
-  font-weight:700
-}
-.nav button:hover,.nav button.active{
-  background:var(--accent2);
-  color:var(--accent)
-}
-.main{
-  margin-left:230px;
-  width:calc(100% - 230px);
-  max-width:1400px;
-  padding:24px;
-  margin-right:auto
-}
-.section{display:none}
-.section.active{display:block}
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:18px
-}
-h1{font-size:24px;margin:0}
-.sub{font-size:13px;color:var(--muted);margin-top:5px}
-.btn{
-  border:0;
-  border-radius:9px;
-  background:var(--accent);
-  color:#fff;
-  font-weight:700;
-  padding:10px 14px;
-  cursor:pointer
-}
-.btn.secondary{
-  background:#edf0f5;
-  color:#3d4654
-}
-.btn.danger{
-  background:#fff0f0;
-  color:var(--red)
-}
-.btn.green{
-  background:#e7f5ee;
-  color:var(--green)
-}
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px
-}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.metric .label{font-size:13px;color:var(--muted)}
-.metric .value{font-size:25px;font-weight:800;margin-top:6px}
-.formgrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px
-}
-input,select,textarea{
-  width:100%;
-  border:1px solid var(--line);
-  border-radius:9px;
-  padding:10px;
-  background:#fff;
-  font:inherit;
-  color:var(--text)
-}
-textarea{min-height:90px;resize:vertical}
-.rows{display:flex;flex-direction:column;gap:8px}
-.row{
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  background:#fff
-}
-.row .title{font-weight:800}
-.row .small{font-size:12px;color:var(--muted);margin-top:4px}
-.empty{
-  padding:20px;
-  border:1px dashed var(--line);
-  border-radius:10px;
-  text-align:center;
-  color:var(--muted)
-}
-.toolbar{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  align-items:center;
-  margin-bottom:14px;
-  flex-wrap:wrap
-}
-.month-nav{display:flex;gap:8px;align-items:center}
-.calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:7px
-}
-.weekday{
-  font-size:12px;
-  font-weight:800;
-  text-align:center;
-  color:var(--muted);
-  padding:6px
-}
-.day{
-  min-height:110px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:8px;
-  background:#fff;
-  cursor:pointer
-}
-.day.other{opacity:.45;background:#fafafa}
-.day.today{border:2px solid var(--accent)}
-.daynum{font-weight:800;margin-bottom:5px}
-.event{
-  font-size:11px;
-  padding:4px 5px;
-  margin-top:4px;
-  border-radius:6px;
-  background:var(--accent2);
-  color:#9d315c;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap
-}
-.week-list,.day-list{display:flex;flex-direction:column;gap:8px}
-.agenda-item{
-  display:grid;
-  grid-template-columns:90px 1fr auto;
-  gap:10px;
-  align-items:center;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:12px;
-  background:#fff
-}
-.time{font-weight:800;color:var(--accent)}
-.status{
-  font-size:12px;
-  font-weight:800;
-  padding:5px 8px;
-  border-radius:999px;
-  background:#fff3e7;
-  color:#a35d00;
-  display:inline-block
-}
-.status.ok{background:#e7f5ee;color:var(--green)}
-.status.paid{background:#e8f0ff;color:#3b5bb5}
-.actions{display:flex;gap:6px;flex-wrap:wrap}
-.modal-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  z-index:20000;
-  padding:16px;
-  overflow:auto
-}
-.modal{
-  background:#fff;
-  max-width:650px;
-  margin:30px auto;
-  border-radius:16px;
-  padding:18px
-}
-.modal h2{margin-top:0}
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  margin-top:14px
-}
-.finance-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.finance-card{
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:15px
-}
-.finance-card .label{font-size:13px;color:var(--muted)}
-.finance-card .value{font-size:22px;font-weight:800;margin-top:7px}
+  :root { --bg:#f5f6f8; --card:#fff; --text:#20242a; --muted:#69707a; --border:#e1e4e8; --accent:#3559e0; --green:#18864b; --red:#c93434; --yellow:#a66a00; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:18px 24px;position:sticky;top:0;z-index:10}
+  header .top{max-width:1200px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between}
+  h1{font-size:22px;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .month{display:flex;align-items:center;gap:8px}
+  select,input,button{font:inherit}
+  select,input{border:1px solid var(--border);border-radius:8px;padding:9px 10px;background:#fff}
+  button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:600}
+  button.secondary{background:#eef1f7;color:#273142}.danger{background:#fff0f0!important;color:var(--red)!important}
+  main{max-width:1200px;margin:24px auto;padding:0 18px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:17px}
+  .label{font-size:13px;color:var(--muted)}.value{font-size:24px;font-weight:700;margin-top:7px}
+  .positive{color:var(--green)}.negative{color:var(--red)}.warning{color:var(--yellow)}
+  .section{margin-top:22px}.section h2{font-size:18px;margin:0 0 12px}
+  .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .rows{display:flex;flex-direction:column;gap:9px}
+  .row{display:grid;grid-template-columns:1.5fr 1fr 110px 120px 90px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  .row.cardrow{grid-template-columns:1.5fr 1fr 1fr 110px 120px 90px}
+  .row .name{font-weight:600}.small{font-size:12px;color:var(--muted)}
+  .status{font-size:12px;font-weight:700}
+  .paid{color:var(--green)}.pending{color:var(--red)}
+  .formbox{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:12px}
+  .formbox.cards{grid-template-columns:1.2fr 1fr 1fr 1fr auto}
+  .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:9px;background:#fff}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .note{font-size:12px;color:var(--muted);line-height:1.5}
+  .footer{margin:28px 0;color:var(--muted);font-size:12px;text-align:center}
 
-/* LOGIN E SINCRONIZAÇÃO */
-.sync-card{
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:18px
-}
-.sync-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px
-}
-.sync-title{font-weight:800;font-size:16px}
-.sync-status{font-size:12px;color:var(--muted);margin-top:4px}
-.sync-login{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-top:12px
-}
-.sync-login input{
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:10px;
-  min-width:180px
-}
-.sync-logged{
-  display:none;
-  margin-top:12px;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px
-}
-
-/* MOBILE */
-@media(max-width:850px){
-  body{padding-bottom:0!important}
-  .app{display:block!important}
-  .side{
-    position:sticky!important;
-    top:0!important;
-    left:auto!important;
-    bottom:auto!important;
-    width:100%!important;
-    height:auto!important;
-    min-height:0!important;
-    padding:8px!important;
-    border-right:0!important;
-    border-bottom:1px solid var(--line)!important;
-    z-index:9999!important;
-    pointer-events:auto!important
-  }
-  .brand{display:none!important}
-  .nav{
-    display:grid!important;
-    grid-template-columns:repeat(4,minmax(0,1fr))!important;
-    gap:4px!important;
-    width:100%!important
-  }
-  .nav button{
-    width:100%!important;
-    margin:0!important;
-    padding:10px 4px!important;
-    min-height:48px!important;
-    text-align:center!important;
-    font-size:13px!important;
-    position:relative!important;
-    z-index:10000!important;
-    pointer-events:auto!important;
-    touch-action:manipulation!important;
-    -webkit-tap-highlight-color:rgba(0,0,0,.08)!important
-  }
-  .main{
-    margin-left:0!important;
-    width:100%!important;
-    padding:12px!important;
-    max-width:none!important
-  }
-  .grid,.finance-grid{grid-template-columns:repeat(2,1fr)}
-  .formgrid{grid-template-columns:1fr 1fr}
-  .calendar{gap:3px}
-  .day{min-height:80px;padding:5px}
-  .event{font-size:9px;padding:3px}
-  .agenda-item{grid-template-columns:65px 1fr}
-  .agenda-item .actions{grid-column:1/-1}
-  .sync-login{
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important
-  }
-  .sync-login .btn{grid-column:1/-1!important}
-  .sync-login input{
-    min-width:0!important;
-    width:100%!important
-  }
-}
-@media(max-width:430px){
-  .nav button{
-    font-size:12px!important;
-    padding:8px 2px!important
-  }
-  .grid,.finance-grid{grid-template-columns:1fr}
-  .formgrid{grid-template-columns:1fr}
-  .day{min-height:65px}
-  .event{display:none}
-}
-
-.quick-select{
-  min-width:135px;
-  padding:10px 12px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  background:#f0e7eb;
-  color:var(--primary2);
-  font:inherit;
-  font-weight:700;
-  cursor:pointer;
-}
+  .charts{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+  .chart-wrap{position:relative;height:280px}
+  canvas{width:100%;height:100%;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .investment-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f7f8fb;border-radius:9px;margin-bottom:10px}
+  .investment-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 100px 80px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  .muted-box{background:#f7f8fb;border-radius:9px;padding:12px;font-size:13px;line-height:1.5}
+  .commitment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .commitment-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:#fff}
+  .progress{height:10px;background:#edf0f4;border-radius:999px;overflow:hidden;margin-top:9px}
+  .progress>div{height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .25s}
+  .percent{font-size:22px;font-weight:700;margin-top:6px}
+  .variable-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 90px;gap:10px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff}
+  @media(max-width:850px){.commitment-grid{grid-template-columns:1fr}.variable-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:850px){.charts{grid-template-columns:1fr}.investment-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.row,.row.cardrow{grid-template-columns:1fr 1fr}.formbox,.formbox.cards{grid-template-columns:1fr 1fr}.formbox button,.formbox.cards button{grid-column:1/-1}}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}header .top{align-items:flex-start;flex-direction:column}.month{width:100%}.month select{flex:1}}
 </style>
 </head>
-
 <body>
-<div class="app">
-
-<aside class="side">
-  <div class="brand">
-    Agenda da Manicure
-    <small>Organização de clientes e horários</small>
+<header>
+  <div class="top">
+    <div><h1>Meu Controle Financeiro</h1><div class="sub">Salário + vale convertido + receitas extras − contas − cartões</div></div>
+    <div class="month"><button class="secondary" onclick="changeMonth(-1)">‹</button><select id="month"></select><button class="secondary" onclick="changeMonth(1)">›</button></div>
   </div>
+</header>
 
-  <div class="nav">
-    <button type="button" class="active" data-section="agenda">Agenda</button>
-    <button type="button" data-section="clientes">Clientes</button>
-    <button type="button" data-section="financeiro">Financeiro</button>
-    <button type="button" data-section="servicos">Serviços</button>
-  </div>
-</aside>
-
-<main class="main">
-
-<div class="sync-card">
-  <div class="sync-head">
-    <div>
-      <div class="sync-title">Sincronização entre dispositivos</div>
-      <div id="syncStatus" class="sync-status">Não conectado</div>
-    </div>
-  </div>
-
-  <div id="loginArea" class="sync-login">
-    <input id="loginEmail" type="email" placeholder="E-mail">
-    <input id="loginPassword" type="password" placeholder="Senha">
-    <button type="button" class="btn" onclick="loginAgenda()">Entrar</button>
-  </div>
-
-  <div id="loggedArea" class="sync-logged">
-    <div>Conectado: <b id="loggedEmail"></b></div>
-    <button type="button" class="btn secondary" onclick="logoutAgenda()">Sair</button>
-  </div>
-</div>
-
-<section id="agenda" class="section active">
-  <div class="topbar">
-    <div>
-      <h1>Agenda</h1>
-      <div class="sub">Organize os horários e acompanhe seus atendimentos.</div>
-    </div>
-    <button class="btn" type="button" onclick="abrirNovoAgendamento()">+ Agendamento</button>
-  </div>
-
-  <div class="card">
-    <div class="toolbar">
-      <div class="month-nav">
-        <button class="btn secondary" type="button" onclick="moverDia(-1)">‹</button>
-        <strong id="tituloAgenda"></strong>
-        <button class="btn secondary" type="button" onclick="moverDia(1)">›</button>
+<main>
+  <div class="section card" id="syncCard">
+    <div class="section-head"><h2>Sincronização entre dispositivos</h2><span id="syncStatus" class="small">Não conectado</span></div>
+    <div id="loginArea">
+      <div class="formbox" style="grid-template-columns:1fr 1fr auto">
+        <input id="loginEmail" type="email" placeholder="Seu e-mail">
+        <input id="loginPassword" type="password" placeholder="Senha">
+        <button onclick="login()">Entrar</button>
       </div>
-
-      <select id="visaoAgenda" onchange="renderAgenda()" style="max-width:180px">
-        <option value="dia">Dia</option>
-        <option value="semana">Semana</option>
-        <option value="mes">Mês</option>
-      </select>
+      <div class="note">Depois de configurar o banco online, use o mesmo login no computador e no celular. As alterações aparecerão nos dispositivos automaticamente.</div>
     </div>
-
-    <div id="conteudoAgenda"></div>
-  </div>
-</section>
-
-<section id="clientes" class="section">
-  <div class="topbar">
-    <div>
-      <h1>Clientes</h1>
-      <div class="sub">Cadastre e encontre suas clientes.</div>
-    </div>
-    <button class="btn" type="button" onclick="abrirNovoCliente()">+ Cliente</button>
-  </div>
-
-  <div class="card">
-    <input id="buscaCliente" placeholder="Buscar cliente..." oninput="renderClientes()">
-  </div>
-
-  <div id="listaClientes" class="rows"></div>
-</section>
-
-<section id="financeiro" class="section">
-  <div class="topbar">
-    <div>
-      <h1>Financeiro</h1>
-      <div class="sub">Resumo dos atendimentos realizados.</div>
+    <div id="loggedArea" style="display:none">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <div class="small">Conta conectada: <b id="loggedEmail"></b></div>
+        <button class="secondary" onclick="logout()">Sair</button>
+      </div>
     </div>
   </div>
+  <div class="grid">
+    <div class="card"><div class="label">Receita prevista</div><div id="income" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Contas + cartões</div><div id="expenses" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Saldo previsto</div><div id="balance" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Falta para fechar o mês</div><div id="missing" class="value">R$ 0,00</div></div>
+  </div>
 
-  <div class="finance-grid">
-    <div class="finance-card">
-      <div class="label">Agendado</div>
-      <div id="finAgendado" class="value">R$ 0,00</div>
+  <div class="section card">
+    <div class="section-head"><h2>1. Renda do mês</h2></div>
+    <div class="formbox" style="grid-template-columns:1fr 1fr 1fr 1fr auto">
+      <input id="salary" type="number" step="0.01" placeholder="Salário fixo">
+      <input id="vale" type="number" step="0.01" placeholder="Vale / benefício">
+      <input id="valeConvert" type="number" step="0.01" placeholder="Valor que vira dinheiro">
+      <input id="otherIncome" type="number" step="0.01" placeholder="Outras receitas">
+      <button onclick="saveIncome()">Salvar</button>
     </div>
-    <div class="finance-card">
-      <div class="label">Recebido</div>
-      <div id="finRecebido" class="value">R$ 0,00</div>
+    <div class="note">O campo “vale / benefício” registra o valor recebido. “Valor que vira dinheiro” é o quanto efetivamente será convertido em dinheiro e entrará no orçamento. Outras receitas são somadas às receitas extras cadastradas abaixo.</div>
+  </div>
+
+  <div class="section two">
+    <div class="card">
+      <div class="section-head"><h2>2. Valores a receber</h2></div>
+      <div class="formbox" style="grid-template-columns:1fr 1fr auto">
+        <input id="recvName" placeholder="Ex.: Namorado">
+        <input id="recvValue" type="number" step="0.01" placeholder="Valor">
+        <button onclick="addReceivable()">Adicionar</button>
+      </div>
+      <div id="receivables" class="rows"></div>
+      <div class="note" style="margin-top:10px">Só entra no saldo disponível quando você marcar como recebido.</div>
     </div>
-    <div class="finance-card">
-      <div class="label">Pendente</div>
-      <div id="finPendente" class="value">R$ 0,00</div>
-    </div>
-    <div class="finance-card">
-      <div class="label">Atendimentos</div>
-      <div id="finQuantidade" class="value">0</div>
+
+    <div class="card">
+      <div class="section-head"><h2>3. Contas fixas</h2></div>
+      <div class="formbox" style="grid-template-columns:1.4fr 1fr 1fr auto">
+        <input id="billName" placeholder="Ex.: Consórcio">
+        <input id="billValue" type="number" step="0.01" placeholder="Valor">
+        <input id="billDue" type="number" min="1" max="31" placeholder="Dia">
+        <button onclick="addBill()">Adicionar</button>
+      </div>
+      <div id="bills" class="rows"></div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <h3 style="margin-top:0">Agendamentos</h3>
-    <div id="listaFinanceiro" class="rows"></div>
-  </div>
-</section>
-
-<section id="servicos" class="section">
-  <div class="topbar">
-    <div>
-      <h1>Serviços</h1>
-      <div class="sub">Cadastre os serviços e valores.</div>
+  <div class="section card">
+    <div class="section-head"><h2>4. Faturas dos cartões</h2><span class="small">Você pode cadastrar quantos cartões quiser nas 3 instituições.</span></div>
+    <div class="formbox cards">
+      <input id="cardBank" placeholder="Instituição financeira">
+      <input id="cardName" placeholder="Ex.: Visa / final 1234">
+      <input id="cardValue" type="number" step="0.01" placeholder="Fatura">
+      <input id="cardDue" type="number" min="1" max="31" placeholder="Vencimento">
+      <button onclick="addCard()">Adicionar</button>
     </div>
-    <button class="btn" type="button" onclick="abrirNovoServico()">+ Serviço</button>
+    <div id="cards" class="rows"></div>
   </div>
 
-  <div id="listaServicos" class="rows"></div>
-</section>
+  <div class="section card">
+    <div class="section-head"><h2>5. Despesas variáveis</h2><span class="small">Gastos que não são fixos: Pix, débito, dinheiro etc.</span></div>
+    <div class="formbox" style="grid-template-columns:1.2fr 1fr 1fr 1fr auto">
+      <input id="varName" placeholder="Ex.: Mercado, gasolina, lazer...">
+      <input id="varCategory" placeholder="Categoria">
+      <input id="varValue" type="number" step="0.01" placeholder="Valor">
+      <select id="varMethod"><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Dinheiro">Dinheiro</option><option value="Outro">Outro</option></select>
+      <button onclick="addVariable()">Adicionar</button>
+    </div>
+    <div id="variables" class="rows"></div>
+  </div>
 
+  <div class="section card">
+    <div class="section-head"><h2>6. Quanto da minha renda já está comprometido?</h2><span class="small">Percentuais calculados sobre o salário e sobre a renda total do mês.</span></div>
+    <div class="commitment-grid">
+      <div class="commitment-card"><div class="label">Comprometimento do salário</div><div id="salaryPct" class="percent">0%</div><div class="small" id="salaryPctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="salaryBar"></div></div></div>
+      <div class="commitment-card"><div class="label">Comprometimento da renda total</div><div id="incomePct" class="percent">0%</div><div class="small" id="incomePctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="incomeBar"></div></div></div>
+      <div class="commitment-card"><div class="label">Investido do salário</div><div id="investPct" class="percent">0%</div><div class="small" id="investPctText">R$ 0,00 de R$ 0,00</div><div class="progress"><div id="investBar"></div></div></div>
+    </div>
+    <div class="muted-box" style="margin-top:12px">Aqui você consegue visualizar rapidamente quanto do seu salário já está comprometido com contas, cartões e despesas variáveis. As receitas extras recebidas aumentam sua renda disponível, mas não alteram o percentual calculado especificamente sobre o salário.</div>
+  </div>
+
+  <div class="section charts">
+    <div class="card">
+      <div class="section-head"><h2>7. Visão do mês</h2><span class="small">Receitas x compromissos</span></div>
+      <div class="chart-wrap"><canvas id="cashChart"></canvas></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#3559e0"></i>Receitas</span>
+        <span><i class="dot" style="background:#c93434"></i>Contas + cartões</span>
+        <span><i class="dot" style="background:#18864b"></i>Saldo</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-head"><h2>Distribuição das despesas</h2><span class="small">Onde seu dinheiro está comprometido</span></div>
+      <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#7a5af8"></i>Contas fixas</span>
+        <span><i class="dot" style="background:#ff8a4c"></i>Cartões</span>
+        <span><i class="dot" style="background:#2f9e44"></i>Variáveis</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>8. Investimentos</h2><span class="small">Valores investidos ficam separados das despesas do mês.</span></div>
+    <div class="investment-total"><span>Total investido no mês</span><b id="investTotal">R$ 0,00</b></div>
+    <div class="formbox" style="grid-template-columns:1.3fr 1fr 1fr 1fr auto">
+      <input id="invName" placeholder="Ex.: Reserva de emergência">
+      <input id="invType" placeholder="Tipo: CDB, fundo, ações...">
+      <input id="invValue" type="number" step="0.01" placeholder="Valor aplicado">
+      <input id="invDate" type="date">
+      <button onclick="addInvestment()">Adicionar</button>
+    </div>
+    <div id="investments" class="rows"></div>
+    <div class="muted-box" style="margin-top:12px">
+      O investimento não é tratado como despesa comum: ele será mostrado separadamente para você acompanhar quanto conseguiu direcionar para seu patrimônio. Em uma próxima evolução, dá para controlar rentabilidade, aportes recorrentes e saldo acumulado por investimento.
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="section-head"><h2>9. Resumo do mês</h2><button class="danger" onclick="clearMonth()">Limpar mês</button></div>
+    <div id="summary" class="note"></div>
+  </div>
+
+  <div class="footer">Com o banco online configurado, os dados ficam sincronizados entre seus dispositivos. Sem essa configuração, o app funciona apenas localmente no navegador.</div>
 </main>
-</div>
-
-<div id="modalBg" class="modal-bg">
-  <div id="modal" class="modal"></div>
-</div>
 
 <script>
-const KEY="agenda_manicure_v1";
-const SUPABASE_URL="https://dcnlcctzwigqzqhslqes.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_oh1zzezr_Cv_vqzHo-Uskw_HoJ2OBvP";
-const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+const KEY='controle_financeiro_v2';
+const SUPABASE_URL = 'https://rsqavveigkdysxcmcioa.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_6rsJ3AszRnTqSJ74KbxB-w_BOIFntzf';
+const cloudReady = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+const sb = cloudReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-let db=JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"servicos":[],"agendamentos":[]}');
+let db=JSON.parse(localStorage.getItem(KEY)||'{}');
+let current=new Date().toISOString().slice(0,7);
+let cloudChannel=null;
 
-if(!Array.isArray(db.clientes))db.clientes=[];
-if(!Array.isArray(db.servicos))db.servicos=[];
-if(!Array.isArray(db.agendamentos))db.agendamentos=[];
+const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const monthName=m=>new Date(m+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+function emptyMonth(){return {salary:0,vale:0,valeConvert:0,otherIncome:0,receivables:[],bills:[],cards:[],variables:[],investments:[]}}
+function data(){ if(!db[current]) db[current]=emptyMonth(); if(!db[current].investments) db[current].investments=[]; if(!db[current].variables) db[current].variables=[]; return db[current]; }
 
-let dia=new Date();
-dia.setHours(0,0,0,0);
-
-const pad=n=>String(n).padStart(2,"0");
-const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-
-const brDate=d=>new Intl.DateTimeFormat("pt-BR",{
-  weekday:"long",
-  day:"2-digit",
-  month:"long"
-}).format(d);
-
-const money=v=>new Intl.NumberFormat("pt-BR",{
-  style:"currency",
-  currency:"BRL"
-}).format(Number(v)||0);
-
-const gerarId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-
-function saveLocal(){
-  localStorage.setItem(KEY,JSON.stringify(db));
+function setSyncStatus(text,good=false){
+  const el=document.getElementById('syncStatus'); if(!el) return;
+  el.textContent=text; el.className='small '+(good?'positive':'warning');
 }
-
-function setSyncStatus(t){
-  const e=document.getElementById("syncStatus");
-  if(e)e.textContent=t;
-}
-
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(db));}
 async function save(){
-  saveLocal();
-
-  if(!sb)return;
-
+  saveLocal(); render();
+  if(cloudReady){
+    const {data:{user}}=await sb.auth.getUser();
+    if(user){
+      const payload={user_id:user.id, month_key:current, data:db[current], updated_at:new Date().toISOString()};
+      const {error}=await sb.from('finance_months').upsert(payload,{onConflict:'user_id,month_key'});
+      if(error){ console.error(error); setSyncStatus('Erro ao sincronizar'); }
+      else setSyncStatus('Sincronizado',true);
+    }
+  }
+}
+async function loadCloud(){
+  if(!cloudReady) return;
   const {data:{user}}=await sb.auth.getUser();
-
-  if(!user)return;
-
-  setSyncStatus("Sincronizando...");
-
-  const {error}=await sb
-    .from("agenda_manicure_data")
-    .upsert(
-      {
-        user_id:user.id,
-        data:db,
-        updated_at:new Date().toISOString()
-      },
-      {onConflict:"user_id"}
-    );
-
-  setSyncStatus(error?"Erro ao sincronizar":"Sincronizado");
-}
-
-function esc(s){
-  return String(s??"").replace(/[&<>"']/g,m=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  }[m]));
-}
-
-function showSection(id){
-
-  const target=document.getElementById(id);
-
-  if(!target)return;
-
-  document.querySelectorAll(".section").forEach(x=>{
-    x.classList.remove("active");
-    x.style.display="none";
-  });
-
-  target.classList.add("active");
-  target.style.display="block";
-
-  document.querySelectorAll(".nav button[data-section]").forEach(x=>{
-    x.classList.toggle("active",x.dataset.section===id);
-  });
-
-  if(id==="agenda")renderAgenda();
-  if(id==="clientes")renderClientes();
-  if(id==="servicos")renderServicos();
-  if(id==="financeiro")renderFinanceiro();
-
-  window.scrollTo({top:0,behavior:"instant"});
-}
-
-/* Navegação compatível com computador e celular */
-document.addEventListener("click",function(e){
-
-  const b=e.target.closest && e.target.closest(".nav button[data-section]");
-
-  if(!b)return;
-
-  e.preventDefault();
-
-  showSection(b.dataset.section);
-
-},true);
-
-async function loginAgenda(){
-
-  if(!sb){
-    alert("Não foi possível carregar a conexão.");
-    return;
+  if(!user){setSyncStatus('Não conectado'); return;}
+  const {data:rows,error}=await sb.from('finance_months').select('month_key,data').eq('user_id',user.id);
+  if(error){console.error(error);setSyncStatus('Erro ao carregar');return}
+  if(rows && rows.length){
+    rows.forEach(r=>db[r.month_key]=r.data);
+    saveLocal(); render();
   }
-
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value;
-
-  if(!email||!password){
-    alert("Informe o e-mail e a senha.");
-    return;
-  }
-
-  setSyncStatus("Entrando...");
-
-  const {data,error}=await sb.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    alert(error.message);
-    setSyncStatus("Falha no login");
-    return;
-  }
-
-  await afterLoginAgenda(data.user);
+  setSyncStatus('Sincronizado',true);
+  subscribeRealtime(user.id);
 }
-
-async function afterLoginAgenda(user){
-
-  document.getElementById("loginArea").style.display="none";
-  document.getElementById("loggedArea").style.display="flex";
-  document.getElementById("loggedEmail").textContent=user.email;
-
-  setSyncStatus("Carregando dados...");
-
-  const {data,error}=await sb
-    .from("agenda_manicure_data")
-    .select("data")
-    .eq("user_id",user.id)
-    .maybeSingle();
-
-  if(error){
-    setSyncStatus("Erro ao carregar");
-    return;
-  }
-
-  if(data && data.data){
-
-    db=data.data;
-
-    if(!Array.isArray(db.clientes))db.clientes=[];
-    if(!Array.isArray(db.servicos))db.servicos=[];
-    if(!Array.isArray(db.agendamentos))db.agendamentos=[];
-
-    saveLocal();
-
-  }else{
-
-    await save();
-
-  }
-
-  renderAgenda();
-  renderClientes();
-  renderServicos();
-  renderFinanceiro();
-
-  setSyncStatus("Sincronizado");
+function subscribeRealtime(userId){
+  if(!cloudReady) return;
+  if(cloudChannel) sb.removeChannel(cloudChannel);
+  cloudChannel=sb.channel('finance-sync-'+userId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'finance_months',filter:'user_id=eq.'+userId},payload=>{
+      const row=payload.new || payload.old;
+      if(payload.eventType==='DELETE'){delete db[row.month_key];}
+      else if(row && row.month_key){db[row.month_key]=row.data;}
+      saveLocal(); render(); setSyncStatus('Atualizado em tempo real',true);
+    })
+    .subscribe();
 }
-
-async function logoutAgenda(){
-
-  if(sb)await sb.auth.signOut();
-
-  document.getElementById("loginArea").style.display="grid";
-  document.getElementById("loggedArea").style.display="none";
-
-  setSyncStatus("Não conectado");
+async function login(){
+  if(!cloudReady){alert('O banco online ainda não foi configurado.');return}
+  const email=document.getElementById('loginEmail').value.trim(), password=document.getElementById('loginPassword').value;
+  if(!email||!password){alert('Informe e-mail e senha.');return}
+  setSyncStatus('Conectando...');
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){alert(error.message);setSyncStatus('Falha no login');return}
+  document.getElementById('loginArea').style.display='none';
+  document.getElementById('loggedArea').style.display='block';
+  document.getElementById('loggedEmail').textContent=data.user.email;
+  await loadCloud();
 }
-
-async function initAgendaAuth(){
-
-  if(!sb)return;
-
+async function logout(){
+  if(cloudReady) await sb.auth.signOut();
+  if(cloudChannel){sb.removeChannel(cloudChannel);cloudChannel=null;}
+  document.getElementById('loginArea').style.display='block';
+  document.getElementById('loggedArea').style.display='none';
+  setSyncStatus('Não conectado');
+}
+async function initAuth(){
+  if(!cloudReady){setSyncStatus('Configure o banco online');return}
   const {data:{session}}=await sb.auth.getSession();
-
   if(session){
-    await afterLoginAgenda(session.user);
+    document.getElementById('loginArea').style.display='none';
+    document.getElementById('loggedArea').style.display='block';
+    document.getElementById('loggedEmail').textContent=session.user.email;
+    await loadCloud();
   }
-}
-
-function moverDia(n){
-
-  const visao=document.getElementById("visaoAgenda").value;
-
-  if(visao==="mes"){
-    dia.setMonth(dia.getMonth()+n);
-  }else if(visao==="semana"){
-    dia.setDate(dia.getDate()+(7*n));
-  }else{
-    dia.setDate(dia.getDate()+n);
-  }
-
-  renderAgenda();
-}
-
-function renderAgenda(){
-
-  const visao=document.getElementById("visaoAgenda").value;
-  const conteudo=document.getElementById("conteudoAgenda");
-
-  if(visao==="dia"){
-    document.getElementById("tituloAgenda").textContent=brDate(dia);
-    renderDia(conteudo);
-  }
-
-  if(visao==="semana"){
-    renderSemana(conteudo);
-  }
-
-  if(visao==="mes"){
-    renderMes(conteudo);
-  }
-}
-
-function renderDia(el){
-
-  const data=iso(dia);
-
-  const ag=db.agendamentos
-    .filter(a=>a.data===data)
-    .sort((a,b)=>a.hora.localeCompare(b.hora));
-
-  if(!ag.length){
-    el.innerHTML='<div class="empty">Nenhum agendamento para este dia.</div>';
-    return;
-  }
-
-  el.innerHTML='<div class="day-list">'+ag.map((a,i)=>agendaHTML(a,i)).join("")+'</div>';
-}
-
-function agendaHTML(a,index){
-
-  const cliente=db.clientes.find(c=>c.id===a.clienteId);
-
-  const nome=cliente?cliente.nome:a.nome||"Cliente";
-
-  const serv=db.servicos.find(s=>s.id===a.servicoId);
-
-  const servico=serv?serv.nome:a.servico||"";
-
-  const valor=Number(a.valor||serv?.valor||0);
-
-  return `
-    <div class="agenda-item">
-
-      <div class="time">${esc(a.hora)}</div>
-
-      <div>
-        <div class="title">${esc(nome)}</div>
-        <div class="small">
-          ${esc(servico)}
-          ${valor?` · ${money(valor)}`:""}
-        </div>
-        <div style="margin-top:6px">
-          <span class="status ${a.confirmado?"ok":""}">
-            ${a.confirmado?"Confirmado":"A confirmar"}
-          </span>
-          ${a.pago?'<span class="status paid">Pago</span>':""}
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn secondary" type="button" onclick="confirmar(${index})">
-          ${a.confirmado?"Desconfirmar":"Confirmar"}
-        </button>
-
-        <button class="btn green" type="button" onclick="abrirWhatsApp(${index})">
-          WhatsApp
-        </button>
-
-        <button class="btn secondary" type="button" onclick="marcarPago(${index})">
-          ${a.pago?"Desfazer":"Pago"}
-        </button>
-
-        <button class="btn danger" type="button" onclick="excluirAgendamento(${index})">
-          Excluir
-        </button>
-      </div>
-
-    </div>
-  `;
-}
-function renderSemana(el){
-
-  const inicio=new Date(dia);
-
-  const diaSemana=inicio.getDay();
-
-  inicio.setDate(inicio.getDate()-diaSemana);
-
-  const fim=new Date(inicio);
-  fim.setDate(fim.getDate()+6);
-
-  document.getElementById("tituloAgenda").textContent=
-    inicio.toLocaleDateString("pt-BR")+
-    " até "+
-    fim.toLocaleDateString("pt-BR");
-
-  let html='<div class="week-list">';
-
-  for(let i=0;i<7;i++){
-
-    const d=new Date(inicio);
-    d.setDate(inicio.getDate()+i);
-
-    const data=iso(d);
-
-    const ag=db.agendamentos
-      .filter(a=>a.data===data)
-      .sort((a,b)=>a.hora.localeCompare(b.hora));
-
-    html+=`
-      <div class="card">
-        <div class="title" style="margin-bottom:10px">
-          ${d.toLocaleDateString("pt-BR",{
-            weekday:"long",
-            day:"2-digit",
-            month:"2-digit"
-          })}
-        </div>
-    `;
-
-    if(!ag.length){
-
-      html+='<div class="empty">Nenhum agendamento.</div>';
-
-    }else{
-
-      html+=ag.map(a=>{
-
-        const index=db.agendamentos.indexOf(a);
-
-        return agendaHTML(a,index);
-
-      }).join("");
-
+  sb.auth.onAuthStateChange(async (_event,session)=>{
+    if(session){
+      document.getElementById('loginArea').style.display='none';
+      document.getElementById('loggedArea').style.display='block';
+      document.getElementById('loggedEmail').textContent=session.user.email;
+      await loadCloud();
     }
-
-    html+='</div>';
-
-  }
-
-  html+='</div>';
-
-  el.innerHTML=html;
-}
-
-function renderMes(el){
-
-  const ano=dia.getFullYear();
-  const mes=dia.getMonth();
-
-  const primeiro=new Date(ano,mes,1);
-  const ultimo=new Date(ano,mes+1,0);
-
-  document.getElementById("tituloAgenda").textContent=
-    primeiro.toLocaleDateString("pt-BR",{
-      month:"long",
-      year:"numeric"
-    });
-
-  const inicio=new Date(primeiro);
-
-  inicio.setDate(primeiro.getDate()-primeiro.getDay());
-
-  const fim=new Date(ultimo);
-
-  fim.setDate(
-    ultimo.getDate()+(6-ultimo.getDay())
-  );
-
-  let html=`
-    <div class="calendar">
-
-      <div class="weekday">Dom</div>
-      <div class="weekday">Seg</div>
-      <div class="weekday">Ter</div>
-      <div class="weekday">Qua</div>
-      <div class="weekday">Qui</div>
-      <div class="weekday">Sex</div>
-      <div class="weekday">Sáb</div>
-  `;
-
-  let atual=new Date(inicio);
-
-  while(atual<=fim){
-
-    const d=new Date(atual);
-
-    const data=iso(d);
-
-    const ag=db.agendamentos
-      .filter(a=>a.data===data)
-      .sort((a,b)=>a.hora.localeCompare(b.hora));
-
-    const fora=d.getMonth()!==mes;
-
-    const hoje=iso(d)===iso(new Date());
-
-    html+=`
-      <div
-        class="day ${fora?"other":""} ${hoje?"today":""}"
-        onclick="abrirDia('${data}')"
-      >
-
-        <div class="daynum">
-          ${d.getDate()}
-        </div>
-
-        ${ag.slice(0,3).map(a=>{
-
-          const cliente=db.clientes.find(
-            c=>c.id===a.clienteId
-          );
-
-          const nome=cliente?
-            cliente.nome:
-            a.nome||"Cliente";
-
-          return `
-            <div class="event">
-              ${esc(a.hora)} ${esc(nome)}
-            </div>
-          `;
-
-        }).join("")}
-
-        ${ag.length>3?
-          `<div class="event">+${ag.length-3} mais</div>`:
-          ""
-        }
-
-      </div>
-    `;
-
-    atual.setDate(atual.getDate()+1);
-
-  }
-
-  html+='</div>';
-
-  el.innerHTML=html;
-}
-
-function abrirDia(data){
-
-  const partes=data.split("-");
-
-  dia=new Date(
-    Number(partes[0]),
-    Number(partes[1])-1,
-    Number(partes[2])
-  );
-
-  document.getElementById("visaoAgenda").value="dia";
-
-  renderAgenda();
-}
-
-function abrirNovoCliente(){
-
-  abrirModal(`
-    <h2>Nova cliente</h2>
-
-    <div class="formgrid">
-
-      <input
-        id="clienteNome"
-        placeholder="Nome completo"
-      >
-
-      <input
-        id="clienteTelefone"
-        placeholder="Telefone / WhatsApp"
-        inputmode="tel"
-      >
-
-    </div>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="btn secondary"
-        onclick="fecharModal()"
-      >
-        Cancelar
-      </button>
-
-      <button
-        type="button"
-        class="btn"
-        onclick="salvarCliente()"
-      >
-        Salvar cliente
-      </button>
-
-    </div>
-  `);
-}
-
-async function salvarCliente(){
-
-  const nome=
-    document.getElementById("clienteNome")
-    .value
-    .trim();
-
-  const telefone=
-    document.getElementById("clienteTelefone")
-    .value
-    .trim();
-
-  if(!nome){
-
-    alert("Informe o nome da cliente.");
-
-    return;
-  }
-
-  db.clientes.push({
-    id:gerarId(),
-    nome,
-    telefone
   });
-
-  await save();
-
-  fecharModal();
-
-  renderClientes();
 }
 
-function renderClientes(){
-
-  const busca=
-    document.getElementById("buscaCliente")?
-    document.getElementById("buscaCliente")
-      .value
-      .trim()
-      .toLowerCase():
-    "";
-
-  const clientes=db.clientes.filter(c=>{
-
-    return (
-      c.nome.toLowerCase().includes(busca) ||
-      String(c.telefone||"")
-        .toLowerCase()
-        .includes(busca)
-    );
-
-  });
-
-  const lista=document.getElementById("listaClientes");
-
-  if(!clientes.length){
-
-    lista.innerHTML=
-      '<div class="empty">Nenhuma cliente cadastrada.</div>';
-
-    return;
-  }
-
-  lista.innerHTML=clientes.map(c=>{
-
-    const index=db.clientes.indexOf(c);
-
-    return `
-      <div class="row">
-
-        <div>
-
-          <div class="title">
-            ${esc(c.nome)}
-          </div>
-
-          <div class="small">
-            ${esc(c.telefone||"Sem telefone")}
-          </div>
-
-        </div>
-
-        <div class="actions">
-
-          ${c.telefone?
-            `
-              <button
-                type="button"
-                class="btn green"
-                onclick="whatsCliente('${c.id}')"
-              >
-                WhatsApp
-              </button>
-            `:
-            ""
-          }
-
-          <button
-            type="button"
-            class="btn danger"
-            onclick="excluirCliente(${index})"
-          >
-            Excluir
-          </button>
-
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
+function setupMonths(){
+ const s=document.getElementById('month');s.innerHTML='';
+ const base=new Date(current+'-01T12:00:00');
+ for(let i=-12;i<=12;i++){let d=new Date(base);d.setMonth(d.getMonth()+i);let m=d.toISOString().slice(0,7);let o=document.createElement('option');o.value=m;o.textContent=monthName(m);if(m===current)o.selected=true;s.appendChild(o)}
+ s.onchange=()=>{current=s.value;render()}
 }
+function changeMonth(n){let d=new Date(current+'-01T12:00:00');d.setMonth(d.getMonth()+n);current=d.toISOString().slice(0,7);setupMonths();render()}
+function saveIncome(){let d=data();d.salary=+document.getElementById('salary').value||0;d.vale=+document.getElementById('vale').value||0;d.valeConvert=+document.getElementById('valeConvert').value||0;d.otherIncome=+document.getElementById('otherIncome').value||0;save()}
+function addReceivable(){let n=document.getElementById('recvName').value.trim(),v=+document.getElementById('recvValue').value||0;if(!n||!v)return;data().receivables.push({id:id(),name:n,value:v,received:false});document.getElementById('recvName').value='';document.getElementById('recvValue').value='';save()}
+function addBill(){let n=document.getElementById('billName').value.trim(),v=+document.getElementById('billValue').value||0,d=+document.getElementById('billDue').value||0;if(!n||!v)return;data().bills.push({id:id(),name:n,value:v,due:d,paid:false});document.getElementById('billName').value='';document.getElementById('billValue').value='';document.getElementById('billDue').value='';save()}
+function addCard(){let b=document.getElementById('cardBank').value.trim(),n=document.getElementById('cardName').value.trim(),v=+document.getElementById('cardValue').value||0,d=+document.getElementById('cardDue').value||0;if(!b||!n||!v)return;data().cards.push({id:id(),bank:b,name:n,value:v,due:d,paid:false});document.getElementById('cardBank').value='';document.getElementById('cardName').value='';document.getElementById('cardValue').value='';document.getElementById('cardDue').value='';save()}
+function addVariable(){let n=document.getElementById('varName').value.trim(),c=document.getElementById('varCategory').value.trim(),v=+document.getElementById('varValue').value||0,m=document.getElementById('varMethod').value;if(!n||!v)return;data().variables.push({id:id(),name:n,category:c,value:v,method:m});document.getElementById('varName').value='';document.getElementById('varCategory').value='';document.getElementById('varValue').value='';document.getElementById('varMethod').value='Pix';save()}
+function addInvestment(){let n=document.getElementById('invName').value.trim(),t=document.getElementById('invType').value.trim(),v=+document.getElementById('invValue').value||0,dt=document.getElementById('invDate').value||current+'-01';if(!n||!v)return;data().investments.push({id:id(),name:n,type:t,value:v,date:dt});document.getElementById('invName').value='';document.getElementById('invType').value='';document.getElementById('invValue').value='';document.getElementById('invDate').value='';save()} 
+function toggle(type,i){data()[type][i].paid=!data()[type][i].paid;save()}
+function toggleRecv(i){data().receivables[i].received=!data().receivables[i].received;save()}
+function del(type,i){data()[type].splice(i,1);save()}
+async function clearMonth(){if(!confirm('Apagar todos os dados deste mês?'))return; delete db[current]; saveLocal(); render(); if(cloudReady){const {data:{user}}=await sb.auth.getUser(); if(user){await sb.from('finance_months').delete().eq('user_id',user.id).eq('month_key',current);}}}
 
-async function excluirCliente(index){
-
-  if(!confirm("Deseja excluir esta cliente?"))return;
-
-  db.clientes.splice(index,1);
-
-  await save();
-
-  renderClientes();
+function drawBarChart(canvas, values, labels){
+  const ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height, pad=34, max=Math.max(...values,1), bw=Math.min(70,(w-pad*2)/values.length/1.7);
+  ctx.clearRect(0,0,w,h); ctx.strokeStyle='#d8dce3'; ctx.fillStyle='#69707a'; ctx.font='12px Arial'; ctx.textAlign='center';
+  ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-pad,h-pad);ctx.stroke();
+  values.forEach((v,i)=>{let x=pad+(i+.5)*(w-pad*2)/values.length, bh=(h-pad*2)*(v/max), y=h-pad-bh; ctx.fillStyle=['#3559e0','#c93434','#18864b'][i];ctx.fillRect(x-bw/2,y,bw,bh);ctx.fillStyle='#20242a';ctx.fillText(money(v),x,Math.max(14,y-7));ctx.fillStyle='#69707a';ctx.fillText(labels[i],x,h-12)});
 }
-
-function whatsCliente(id){
-
-  const cliente=db.clientes.find(
-    c=>c.id===id
-  );
-
-  if(!cliente)return;
-
-  const numero=String(cliente.telefone||"")
-    .replace(/\D/g,"");
-
-  if(!numero){
-
-    alert("Esta cliente não possui telefone cadastrado.");
-
-    return;
-  }
-
-  window.open(
-    "https://wa.me/55"+numero,
-    "_blank"
-  );
+function drawPieChart(canvas, values, labels){
+  const ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height,cx=w/2,cy=h/2-5,r=Math.min(w,h)*.32,total=values.reduce((a,b)=>a+b,0);ctx.clearRect(0,0,w,h);
+  if(!total){ctx.fillStyle='#69707a';ctx.font='13px Arial';ctx.textAlign='center';ctx.fillText('Sem despesas cadastradas',cx,cy);return}
+  const colors=['#7a5af8','#ff8a4c','#2f9e44'];let a=-Math.PI/2;
+  values.forEach((v,i)=>{let na=a+(v/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,na);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();a=na});
+  ctx.beginPath();ctx.arc(cx,cy,r*.52,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#20242a';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText(money(total),cx,cy+5);
 }
-
-function abrirNovoServico(){
-
-  abrirModal(`
-    <h2>Novo serviço</h2>
-
-    <div class="formgrid">
-
-      <input
-        id="servicoNome"
-        placeholder="Nome do serviço"
-      >
-
-      <input
-        id="servicoValor"
-        type="number"
-        step="0.01"
-        placeholder="Valor"
-      >
-
-    </div>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="btn secondary"
-        onclick="fecharModal()"
-      >
-        Cancelar
-      </button>
-
-      <button
-        type="button"
-        class="btn"
-        onclick="salvarServico()"
-      >
-        Salvar serviço
-      </button>
-
-    </div>
-  `);
+function drawCharts(d){
+  const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
+  const income=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
+  const bills=d.bills.reduce((s,x)=>s+x.value,0), cards=d.cards.reduce((s,x)=>s+x.value,0), vars=(d.variables||[]).reduce((s,x)=>s+x.value,0), exp=bills+cards+vars, inv=d.investments.reduce((s,x)=>s+x.value,0);
+  drawBarChart(document.getElementById('cashChart'),[income,exp,Math.max(income-exp,0)],['Receitas','Compromissos','Saldo']);
+  drawPieChart(document.getElementById('expenseChart'),[bills,cards,vars],['Contas fixas','Cartões','Variáveis']);
+  document.getElementById('investTotal').textContent=money(inv);
+  updateCommitment(d,income,bills+cards+vars,inv);
 }
-
-async function salvarServico(){
-
-  const nome=
-    document.getElementById("servicoNome")
-    .value
-    .trim();
-
-  const valor=
-    Number(
-      document.getElementById("servicoValor").value
-    )||0;
-
-  if(!nome){
-
-    alert("Informe o nome do serviço.");
-
-    return;
-  }
-
-  db.servicos.push({
-    id:gerarId(),
-    nome,
-    valor
-  });
-
-  await save();
-
-  fecharModal();
-
-  renderServicos();
+function updateCommitment(d,income,expenses,inv){
+  const salary=Number(d.salary)||0;
+  const salaryPct=salary>0?(expenses/salary)*100:0;
+  const incomePct=income>0?(expenses/income)*100:0;
+  const investPct=salary>0?(inv/salary)*100:0;
+  const fmtPct=v=>Math.round(v*10)/10;
+  document.getElementById('salaryPct').textContent=fmtPct(salaryPct)+'%';
+  document.getElementById('incomePct').textContent=fmtPct(incomePct)+'%';
+  document.getElementById('investPct').textContent=fmtPct(investPct)+'%';
+  document.getElementById('salaryPctText').textContent=money(expenses)+' de '+money(salary);
+  document.getElementById('incomePctText').textContent=money(expenses)+' de '+money(income);
+  document.getElementById('investPctText').textContent=money(inv)+' de '+money(salary);
+  document.getElementById('salaryBar').style.width=Math.min(100,Math.max(0,salaryPct))+'%';
+  document.getElementById('incomeBar').style.width=Math.min(100,Math.max(0,incomePct))+'%';
+  document.getElementById('investBar').style.width=Math.min(100,Math.max(0,investPct))+'%';
 }
+window.addEventListener('resize',()=>drawCharts(data()));
 
-function renderServicos(){
-
-  const lista=document.getElementById("listaServicos");
-
-  if(!db.servicos.length){
-
-    lista.innerHTML=
-      '<div class="empty">Nenhum serviço cadastrado.</div>';
-
-    return;
-  }
-
-  lista.innerHTML=db.servicos.map(s=>{
-
-    const index=db.servicos.indexOf(s);
-
-    return `
-      <div class="row">
-
-        <div>
-
-          <div class="title">
-            ${esc(s.nome)}
-          </div>
-
-          <div class="small">
-            ${money(s.valor)}
-          </div>
-
-        </div>
-
-        <button
-          type="button"
-          class="btn danger"
-          onclick="excluirServico(${index})"
-        >
-          Excluir
-        </button>
-
-      </div>
-    `;
-
-  }).join("");
+function render(){
+ const d=data();
+ document.getElementById('salary').value=d.salary||'';
+ document.getElementById('vale').value=d.vale||'';
+ document.getElementById('valeConvert').value=d.valeConvert||'';
+ document.getElementById('otherIncome').value=d.otherIncome||'';
+ const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
+ const base=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
+ const bills=d.bills.reduce((s,x)=>s+x.value,0),cards=d.cards.reduce((s,x)=>s+x.value,0),vars=(d.variables||[]).reduce((s,x)=>s+x.value,0),exp=bills+cards+vars,bal=base-exp,missing=Math.max(0,-bal);
+ const inc=document.getElementById('income');inc.textContent=money(base);inc.className='value '+(base?'positive':'');
+ document.getElementById('expenses').textContent=money(exp);
+ const bc=document.getElementById('balance');bc.textContent=money(bal);bc.className='value '+(bal>=0?'positive':'negative');
+ const mi=document.getElementById('missing');mi.textContent=money(missing);mi.className='value '+(missing?'negative':'positive');
+ document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 70px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
+ document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 70px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
+ document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
+ document.getElementById('variables').innerHTML=d.variables.length?d.variables.map((x,i)=>`<div class="variable-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.category||'Sem categoria')}</div></div><div>${money(x.value)}</div><div class="small">${esc(x.method)}</div><div></div><button class="danger" onclick="del('variables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma despesa variável cadastrada.</div>';
+ const pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+(d.variables||[]).reduce((s,x)=>s+x.value,0), inv=d.investments.reduce((s,x)=>s+x.value,0);
+ document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
+ drawCharts(d);
+ document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Contas fixas: ${money(bills)} · Cartões: ${money(cards)} · Despesas variáveis: ${money(vars)} · Investimentos: ${money(inv)}<br>Total de compromissos: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar/contabilizar: ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
 }
-
-async function excluirServico(index){
-
-  if(!confirm("Deseja excluir este serviço?"))return;
-
-  db.servicos.splice(index,1);
-
-  await save();
-
-  renderServicos();
-}
-  function abrirNovoAgendamento(dataPadrao=""){
-
-  const clientesOptions=db.clientes.map(c=>
-    `<option value="${c.id}">${esc(c.nome)}</option>`
-  ).join("");
-
-  const servicosOptions=db.servicos.map(s=>
-    `<option value="${s.id}">${esc(s.nome)}</option>`
-  ).join("");
-
-  abrirModal(`
-    <h2>Novo agendamento</h2>
-
-    <div class="formgrid">
-
-      <div>
-        <label>Cliente</label>
-
-        <select id="agCliente">
-          <option value="">Selecione uma cliente</option>
-          ${clientesOptions}
-        </select>
-
-        <div class="small" id="agTelefoneInfo">
-          A cliente já cadastrada terá o WhatsApp preenchido automaticamente.
-        </div>
-      </div>
-
-      <div>
-        <label>Horário</label>
-
-        <input
-          id="agHora"
-          type="time"
-          step="60"
-          placeholder="--:--"
-        >
-
-        <div class="small">
-          Você pode escolher qualquer horário, como 08:15, 08:45 ou 09:10.
-        </div>
-      </div>
-
-      <div>
-        <label>Procedimento</label>
-
-        <select id="agServico">
-          <option value="">Selecione</option>
-          ${servicosOptions}
-        </select>
-      </div>
-
-      <div>
-        <label>Valor</label>
-
-        <input
-          id="agValor"
-          type="number"
-          step="0.01"
-          placeholder="Valor"
-        >
-      </div>
-
-      <div>
-        <label>Confirmação</label>
-
-        <select id="agConfirmacao">
-          <option value="false">A confirmar</option>
-          <option value="true">Confirmado</option>
-          <option value="nao_ira">Não irá</option>
-          <option value="nao_ira_reagendado">Não irá, reagendado</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Pagamento</label>
-
-        <select id="agPagamento">
-          <option value="false">Pendente</option>
-          <option value="true">Pago</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Forma de pagamento</label>
-
-        <select id="agFormaPagamento">
-          <option value="Pix">Pix</option>
-          <option value="Dinheiro">Dinheiro</option>
-          <option value="Cartão">Cartão</option>
-        </select>
-      </div>
-
-      <div style="grid-column:1/-1">
-        <label>Observações</label>
-
-        <textarea
-          id="agObservacoes"
-          placeholder="Ex.: esmalte vermelho, preferência da cliente..."
-          rows="3"
-        ></textarea>
-      </div>
-
-    </div>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="btn secondary"
-        onclick="fecharModal()"
-      >
-        Cancelar
-      </button>
-
-      <button
-        type="button"
-        class="btn"
-        onclick="salvarAgendamento()"
-      >
-        Salvar agendamento
-      </button>
-
-      <button
-        type="button"
-        class="btn green"
-        onclick="salvarAgendamento(true)"
-      >
-        WhatsApp - confirmar horário
-      </button>
-
-    </div>
-  `);
-
-  const clienteSelect=document.getElementById("agCliente");
-  const servico=document.getElementById("agServico");
-
-  function atualizarTelefone(){
-    const cliente=db.clientes.find(
-      x=>x.id===clienteSelect.value
-    );
-
-    const info=document.getElementById("agTelefoneInfo");
-
-    if(!info)return;
-
-    info.textContent=cliente && cliente.telefone
-      ? `WhatsApp: ${cliente.telefone}`
-      : "A cliente já cadastrada terá o WhatsApp preenchido automaticamente.";
-  }
-
-  clienteSelect.addEventListener("change",atualizarTelefone);
-
-  servico.addEventListener("change",function(){
-
-    const s=db.servicos.find(
-      x=>x.id===this.value
-    );
-
-    if(s){
-      document.getElementById("agValor").value=s.valor;
-    }
-
-  });
-
-  atualizarTelefone();
-}
-
-async function salvarAgendamento(abrirWhats=false){
-
-  const janelaWhats=abrirWhats
-    ? window.open("about:blank","_blank")
-    : null;
-
-  const clienteId=
-    document.getElementById("agCliente").value;
-
-  const servicoId=
-    document.getElementById("agServico").value;
-
-  const data=
-    document.getElementById("agData")?
-    document.getElementById("agData").value:
-    (typeof dia!=="undefined" ? iso(dia) : "");
-
-  const hora=
-    document.getElementById("agHora").value;
-
-  const valor=
-    Number(
-      document.getElementById("agValor").value
-    )||0;
-
-  const confirmado=
-    document.getElementById("agConfirmacao").value==="true";
-
-  const pago=
-    document.getElementById("agPagamento").value==="true";
-
-  const formaPagamento=
-    document.getElementById("agFormaPagamento").value;
-
-  const observacoes=
-    document.getElementById("agObservacoes").value.trim();
-
-  if(!clienteId){
-
-    if(janelaWhats)janelaWhats.close();
-
-    alert("Selecione a cliente.");
-
-    return;
-  }
-
-  if(!data){
-
-    if(janelaWhats)janelaWhats.close();
-
-    alert("Informe a data.");
-
-    return;
-  }
-
-  if(!hora){
-
-    if(janelaWhats)janelaWhats.close();
-
-    alert("Informe o horário.");
-
-    return;
-  }
-
-  const cliente=db.clientes.find(
-    c=>c.id===clienteId
-  );
-
-  const servico=db.servicos.find(
-    s=>s.id===servicoId
-  );
-
-  const id=gerarId();
-
-  db.agendamentos.push({
-    id,
-    clienteId,
-    servicoId,
-    data,
-    hora,
-    valor,
-    confirmado,
-    pago,
-    formaPagamento,
-    observacoes,
-    nome:cliente?cliente.nome:"",
-    servicoNome:servico?servico.nome:""
-  });
-
-  await save();
-
-  fecharModal();
-  renderAgenda();
-
-  if(abrirWhats){
-
-    if(!cliente || !cliente.telefone){
-
-      if(janelaWhats)janelaWhats.close();
-
-      alert("A cliente não possui WhatsApp/telefone cadastrado.");
-
-      return;
-    }
-
-    if(janelaWhats){
-      janelaWhats.close();
-    }
-
-    confirmarWhatsApp(id);
-  }
-}
-
-function agendaHTML(a,index){
-
-  const cliente=db.clientes.find(
-    c=>c.id===a.clienteId
-  );
-
-  const servico=db.servicos.find(
-    s=>s.id===a.servicoId
-  );
-
-  const nome=cliente?
-    cliente.nome:
-    a.nome||"Cliente";
-
-  const telefone=cliente?
-    cliente.telefone:
-    "";
-
-  const nomeServico=servico?
-    servico.nome:
-    a.servicoNome||"";
-
-  return `
-    <div class="appointment">
-
-      <div class="appointment-top">
-
-        <div>
-
-          <div class="appointment-time">
-            ${esc(a.hora)}
-          </div>
-
-          <div class="title">
-            ${esc(nome)}
-          </div>
-
-          <div class="small">
-            ${esc(nomeServico)}
-          </div>
-
-        </div>
-
-        <div class="small">
-          ${money(a.valor)}
-        </div>
-
-      </div>
-
-      <div class="badges">
-
-        <span class="badge ${a.confirmado?"yes":"no"}">
-          ${a.confirmado?
-            "Confirmado":
-            "Não confirmado"
-          }
-        </span>
-
-        <span class="badge ${a.pago?"yes":"no"}">
-          ${
-            a.pago
-              ? `Pago${a.formaPagamento ? " - " + esc(a.formaPagamento) : ""}`
-              : "Pendente"
-          }
-        </span>
-
-      </div>
-
-      <div class="appointment-actions">
-
-        ${
-          telefone && !a.confirmado?
-          `
-            <button
-              type="button"
-              class="btn green"
-              onclick="confirmarWhatsApp('${a.id}')"
-            >
-              WhatsApp
-            </button>
-          `:
-          ""
-        }
-
-        <select
-          class="quick-select"
-          onchange="alterarConfirmacaoRapida('${a.id}', this.value)"
-          aria-label="Alterar confirmação"
-        >
-          <option value="false" ${a.confirmado===false||!a.confirmado?"selected":""}>Horário - A confirmar</option>
-          <option value="true" ${a.confirmado===true?"selected":""}>Horário - Confirmado</option>
-          <option value="nao_ira" ${a.confirmado==="nao_ira"?"selected":""}>Horário - Não irá</option>
-          <option value="nao_ira_reagendado" ${a.confirmado==="nao_ira_reagendado"?"selected":""}>Horário - Não irá, reagendado</option>
-        </select>
-
-        <select
-          class="quick-select"
-          onchange="alterarPagamentoRapido('${a.id}', this.value)"
-          aria-label="Alterar pagamento"
-        >
-          <option value="pendente" ${!a.pago?"selected":""}>Pagamento - Pendente</option>
-          <option value="Pix" ${a.pago&&a.formaPagamento==="Pix"?"selected":""}>Pagamento - Pix</option>
-          <option value="Cartão" ${a.pago&&a.formaPagamento==="Cartão"?"selected":""}>Pagamento - Cartão</option>
-          <option value="Dinheiro" ${a.pago&&a.formaPagamento==="Dinheiro"?"selected":""}>Pagamento - Dinheiro</option>
-        </select>
-
-        <button
-          type="button"
-          class="btn danger"
-          onclick="excluirAgendamento('${a.id}')"
-        >
-          Excluir
-        </button>
-
-      </div>
-
-    </div>
-  `;
-}
-
-async function toggleConfirmado(id){
-
-  const ag=db.agendamentos.find(
-    a=>a.id===id
-  );
-
-  if(!ag)return;
-
-  ag.confirmado=!ag.confirmado;
-
-  await save();
-
-  renderAgenda();
-}
-
-async function togglePago(id){
-
-  const ag=db.agendamentos.find(
-    a=>a.id===id
-  );
-
-  if(!ag)return;
-
-  ag.pago=!ag.pago;
-
-  await save();
-
-  renderAgenda();
-
-  renderFinanceiro();
-}
-
-
-async function alterarConfirmacaoRapida(id, valor){
-  const ag=db.agendamentos.find(a=>a.id===id);
-  if(!ag)return;
-
-  ag.confirmado=
-    valor==="true" ? true :
-    valor==="false" ? false :
-    valor;
-
-  await save();
-  renderAgenda();
-}
-
-async function alterarPagamentoRapido(id, valor){
-  const ag=db.agendamentos.find(a=>a.id===id);
-  if(!ag)return;
-
-  if(valor==="pendente"){
-    ag.pago=false;
-    ag.formaPagamento="";
-  }else{
-    ag.pago=true;
-    ag.formaPagamento=valor;
-  }
-
-  await save();
-  renderAgenda();
-  renderFinanceiro();
-}
-
-async function excluirAgendamento(id){
-
-  if(!confirm("Deseja excluir este agendamento?"))return;
-
-  db.agendamentos=db.agendamentos.filter(
-    a=>a.id!==id
-  );
-
-  await save();
-
-  renderAgenda();
-
-  renderFinanceiro();
-}
-
-function confirmarWhatsApp(id){
-
-  const ag=db.agendamentos.find(
-    a=>a.id===id
-  );
-
-  if(!ag)return;
-
-  const cliente=db.clientes.find(
-    c=>c.id===ag.clienteId
-  );
-
-  if(!cliente || !cliente.telefone){
-
-    alert("Esta cliente não possui telefone cadastrado.");
-
-    return;
-  }
-
-  let numero=String(cliente.telefone||"")
-    .replace(/\D/g,"");
-
-  if(!numero){
-    alert("Esta cliente não possui telefone cadastrado.");
-    return;
-  }
-
-  if(!(numero.startsWith("55") && (numero.length===12 || numero.length===13))){
-    numero="55"+numero;
-  }
-
-  const dataObj=new Date(
-    ag.data+"T12:00:00"
-  );
-
-  const dataFormatada=
-    dataObj.toLocaleDateString("pt-BR");
-
-  const mensagem=
-`Olá, ${cliente.nome}!
-
-Passando para confirmar seu horário.
-
-Data: ${dataFormatada}
-Horário: ${ag.hora}
-
-Você confirma sua presença?`;
-
-  const url=
-    "https://wa.me/"+
-    numero+
-    "?text="+
-    encodeURIComponent(mensagem);
-
-  window.open(url,"_blank");
-}
-
-function renderFinanceiro(){
-
-  const mes=dia.getMonth();
-  const ano=dia.getFullYear();
-
-  const agMes=db.agendamentos.filter(a=>{
-
-    const d=new Date(
-      a.data+"T12:00:00"
-    );
-
-    return (
-      d.getMonth()===mes &&
-      d.getFullYear()===ano
-    );
-
-  });
-
-  const total=
-    agMes.reduce(
-      (s,a)=>s+(Number(a.valor)||0),
-      0
-    );
-
-  const recebido=
-    agMes
-      .filter(a=>a.pago)
-      .reduce(
-        (s,a)=>s+(Number(a.valor)||0),
-        0
-      );
-
-  const pendente=total-recebido;
-
-  const titulo=document.getElementById("financeiroTitulo");
-  if(titulo) titulo.textContent=dia.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
-  const agendado=document.getElementById("finAgendado");
-  const qtd=document.getElementById("finQuantidade");
-  const rec=document.getElementById("finRecebido");
-  const pend=document.getElementById("finPendente");
-  if(agendado) agendado.textContent=money(total);
-  if(qtd) qtd.textContent=agMes.length;
-  if(rec) rec.textContent=money(recebido);
-  if(pend) pend.textContent=money(pendente);
-
-  const lista=document.getElementById(
-    "listaFinanceiro"
-  );
-
-  if(!agMes.length){
-
-    lista.innerHTML=
-      '<div class="empty">Nenhum agendamento neste mês.</div>';
-
-    return;
-  }
-
-  lista.innerHTML=agMes
-    .sort((a,b)=>
-      (a.data+a.hora)
-        .localeCompare(b.data+b.hora)
-    )
-    .map(a=>{
-
-      const cliente=db.clientes.find(
-        c=>c.id===a.clienteId
-      );
-
-      return `
-        <div class="row">
-
-          <div>
-
-            <div class="title">
-              ${esc(
-                cliente?
-                cliente.nome:
-                a.nome||"Cliente"
-              )}
-            </div>
-
-            <div class="small">
-              ${new Date(
-                a.data+"T12:00:00"
-              ).toLocaleDateString("pt-BR")}
-              às ${esc(a.hora)}
-            </div>
-
-          </div>
-
-          <div>
-
-            <div class="title">
-              ${money(a.valor)}
-            </div>
-
-            <div class="small ${
-              a.pago?
-              "positive":
-              "negative"
-            }">
-
-              ${a.pago?
-                "Pago":
-                "Pendente"
-              }
-
-            </div>
-
-          </div>
-
-        </div>
-      `;
-
-    }).join("");
-}
-
-
-/* =========================
-   MODAL
-========================= */
-
-function abrirModal(conteudo){
-  document.getElementById("modal").innerHTML=conteudo;
-  document.getElementById("modalBg").style.display="flex";
-}
-
-function fecharModal(){
-  document.getElementById("modalBg").style.display="none";
-  document.getElementById("modal").innerHTML="";
-}
-
-/* =========================
-   INICIALIZAÇÃO
-========================= */
-
-async function iniciar(){
-  saveLocal();
-  renderAgenda();
-  renderClientes();
-  renderServicos();
-  renderFinanceiro();
-  await initAgendaAuth();
-}
-
-iniciar();
-
-document.getElementById("modalBg").addEventListener("click",function(e){
-  if(e.target===this) fecharModal();
-});
-
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+setupMonths();render();initAuth();
 </script>
-
 </body>
 </html>
