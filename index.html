@@ -355,6 +355,18 @@ textarea{min-height:90px;resize:vertical}
   .day{min-height:65px}
   .event{display:none}
 }
+
+.quick-select{
+  min-width:135px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#f0e7eb;
+  color:var(--primary2);
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
 </style>
 </head>
 
@@ -1641,9 +1653,10 @@ function agendaHTML(a,index){
         </span>
 
         <span class="badge ${a.pago?"yes":"no"}">
-          ${a.pago?
-            `Pago${a.formaPagamento ? " - " + esc(a.formaPagamento) : ""}`:
-            "Pendente"
+          ${
+            a.pago
+              ? `Pago${a.formaPagamento ? " - " + esc(a.formaPagamento) : ""}`
+              : "Pendente"
           }
         </span>
 
@@ -1665,35 +1678,27 @@ function agendaHTML(a,index){
           ""
         }
 
-        <button
-          type="button"
-          class="btn secondary"
-          onclick="toggleConfirmado('${a.id}')"
+        <select
+          class="quick-select"
+          onchange="alterarConfirmacaoRapida('${a.id}', this.value)"
+          aria-label="Alterar confirmação"
         >
-          ${a.confirmado?
-            "Desconfirmar":
-            "Confirmar"
-          }
-        </button>
+          <option value="false" ${a.confirmado===false||!a.confirmado?"selected":""}>Horário - A confirmar</option>
+          <option value="true" ${a.confirmado===true?"selected":""}>Horário - Confirmado</option>
+          <option value="nao_ira" ${a.confirmado==="nao_ira"?"selected":""}>Horário - Não irá</option>
+          <option value="nao_ira_reagendado" ${a.confirmado==="nao_ira_reagendado"?"selected":""}>Horário - Não irá, reagendado</option>
+        </select>
 
-        <button
-          type="button"
-          class="btn secondary"
-          onclick="togglePago('${a.id}')"
+        <select
+          class="quick-select"
+          onchange="alterarPagamentoRapido('${a.id}', this.value)"
+          aria-label="Alterar pagamento"
         >
-          ${a.pago?
-            "Desmarcar pagamento":
-            "Marcar pago"
-          }
-        </button>
-
-        <button
-          type="button"
-          class="btn secondary"
-          onclick="editarAgendamento('${a.id}')"
-        >
-          Editar
-        </button>
+          <option value="pendente" ${!a.pago?"selected":""}>Pagamento - Pendente</option>
+          <option value="Pix" ${a.pago&&a.formaPagamento==="Pix"?"selected":""}>Pagamento - Pix</option>
+          <option value="Cartão" ${a.pago&&a.formaPagamento==="Cartão"?"selected":""}>Pagamento - Cartão</option>
+          <option value="Dinheiro" ${a.pago&&a.formaPagamento==="Dinheiro"?"selected":""}>Pagamento - Dinheiro</option>
+        </select>
 
         <button
           type="button"
@@ -1742,135 +1747,32 @@ async function togglePago(id){
 }
 
 
-function editarAgendamento(id){
-
+async function alterarConfirmacaoRapida(id, valor){
   const ag=db.agendamentos.find(a=>a.id===id);
   if(!ag)return;
 
-  const clientesOptions=db.clientes.map(c=>
-    `<option value="${c.id}" ${c.id===ag.clienteId?"selected":""}>${esc(c.nome)}</option>`
-  ).join("");
-
-  const servicosOptions=db.servicos.map(s=>
-    `<option value="${s.id}" ${s.id===ag.servicoId?"selected":""}>${esc(s.nome)}</option>`
-  ).join("");
-
-  abrirModal(`
-    <h2>Editar agendamento</h2>
-
-    <div class="formgrid">
-
-      <div>
-        <label>Cliente</label>
-        <select id="editCliente">
-          <option value="">Selecione uma cliente</option>
-          ${clientesOptions}
-        </select>
-      </div>
-
-      <div>
-        <label>Horário</label>
-        <input id="editHora" type="time" value="${esc(ag.hora||"")}">
-      </div>
-
-      <div>
-        <label>Procedimento</label>
-        <select id="editServico">
-          <option value="">Selecione</option>
-          ${servicosOptions}
-        </select>
-      </div>
-
-      <div>
-        <label>Valor</label>
-        <input id="editValor" type="number" step="0.01" value="${Number(ag.valor||0)}">
-      </div>
-
-      <div>
-        <label>Confirmação</label>
-        <select id="editConfirmacao">
-          <option value="false" ${ag.confirmado===false||!ag.confirmado?"selected":""}>A confirmar</option>
-          <option value="true" ${ag.confirmado===true?"selected":""}>Confirmado</option>
-          <option value="nao_ira" ${ag.confirmado==="nao_ira"?"selected":""}>Não irá</option>
-          <option value="nao_ira_reagendado" ${ag.confirmado==="nao_ira_reagendado"?"selected":""}>Não irá, reagendado</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Pagamento</label>
-        <select id="editPagamento">
-          <option value="false" ${!ag.pago?"selected":""}>Pendente</option>
-          <option value="true" ${ag.pago?"selected":""}>Pago</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Forma de pagamento</label>
-        <select id="editFormaPagamento">
-          <option value="Pix" ${ag.formaPagamento==="Pix"?"selected":""}>Pix</option>
-          <option value="Dinheiro" ${ag.formaPagamento==="Dinheiro"?"selected":""}>Dinheiro</option>
-          <option value="Cartão" ${ag.formaPagamento==="Cartão"?"selected":""}>Cartão</option>
-        </select>
-      </div>
-
-      <div style="grid-column:1/-1">
-        <label>Observações</label>
-        <textarea id="editObservacoes" rows="3">${esc(ag.observacoes||"")}</textarea>
-      </div>
-
-    </div>
-
-    <div class="modal-actions">
-      <button type="button" class="btn secondary" onclick="fecharModal()">
-        Cancelar
-      </button>
-
-      <button type="button" class="btn" onclick="salvarEdicaoAgendamento('${id}')">
-        Salvar alterações
-      </button>
-    </div>
-  `);
-
-  document.getElementById("editServico").addEventListener("change",function(){
-    const s=db.servicos.find(x=>x.id===this.value);
-    if(s)document.getElementById("editValor").value=s.valor;
-  });
-}
-
-async function salvarEdicaoAgendamento(id){
-
-  const ag=db.agendamentos.find(a=>a.id===id);
-  if(!ag)return;
-
-  const clienteId=document.getElementById("editCliente").value;
-  const servicoId=document.getElementById("editServico").value;
-  const cliente=db.clientes.find(c=>c.id===clienteId);
-  const servico=db.servicos.find(s=>s.id===servicoId);
-
-  if(!clienteId){
-    alert("Selecione a cliente.");
-    return;
-  }
-
-  if(!document.getElementById("editHora").value){
-    alert("Informe o horário.");
-    return;
-  }
-
-  ag.clienteId=clienteId;
-  ag.servicoId=servicoId;
-  ag.hora=document.getElementById("editHora").value;
-  ag.valor=Number(document.getElementById("editValor").value)||0;
-  ag.confirmado=document.getElementById("editConfirmacao").value==="true" ? true : document.getElementById("editConfirmacao").value==="false" ? false : document.getElementById("editConfirmacao").value;
-  ag.pago=document.getElementById("editPagamento").value==="true";
-  ag.formaPagamento=document.getElementById("editFormaPagamento").value;
-  ag.observacoes=document.getElementById("editObservacoes").value.trim();
-  ag.nome=cliente?cliente.nome:"";
-  ag.servicoNome=servico?servico.nome:"";
+  ag.confirmado=
+    valor==="true" ? true :
+    valor==="false" ? false :
+    valor;
 
   await save();
+  renderAgenda();
+}
 
-  fecharModal();
+async function alterarPagamentoRapido(id, valor){
+  const ag=db.agendamentos.find(a=>a.id===id);
+  if(!ag)return;
+
+  if(valor==="pendente"){
+    ag.pago=false;
+    ag.formaPagamento="";
+  }else{
+    ag.pago=true;
+    ag.formaPagamento=valor;
+  }
+
+  await save();
   renderAgenda();
   renderFinanceiro();
 }
