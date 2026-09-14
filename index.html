@@ -55,6 +55,14 @@
   @media(max-width:850px){.charts{grid-template-columns:1fr}.investment-row{grid-template-columns:1fr 1fr}}
   @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.row,.row.cardrow{grid-template-columns:1fr 1fr}.formbox,.formbox.cards{grid-template-columns:1fr 1fr}.formbox button,.formbox.cards button{grid-column:1/-1}}
   @media(max-width:520px){.grid{grid-template-columns:1fr}header .top{align-items:flex-start;flex-direction:column}.month{width:100%}.month select{flex:1}}
+
+  .edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+  .edit-modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .edit-modal h2{margin:0 0 16px}
+  .edit-fields{display:grid;gap:12px}
+  .edit-fields label{font-size:13px;font-weight:700;display:grid;gap:6px}
+  .edit-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
 </style>
 </head>
 <body>
@@ -316,7 +324,99 @@ function addBill(){let n=document.getElementById('billName').value.trim(),v=+doc
 function addCard(){let b=document.getElementById('cardBank').value.trim(),n=document.getElementById('cardName').value.trim(),v=+document.getElementById('cardValue').value||0,d=+document.getElementById('cardDue').value||0;if(!b||!n||!v)return;data().cards.push({id:id(),bank:b,name:n,value:v,due:d,paid:false});document.getElementById('cardBank').value='';document.getElementById('cardName').value='';document.getElementById('cardValue').value='';document.getElementById('cardDue').value='';save()}
 function addVariable(){let n=document.getElementById('varName').value.trim(),c=document.getElementById('varCategory').value.trim(),v=+document.getElementById('varValue').value||0,m=document.getElementById('varMethod').value;if(!n||!v)return;data().variables.push({id:id(),name:n,category:c,value:v,method:m});document.getElementById('varName').value='';document.getElementById('varCategory').value='';document.getElementById('varValue').value='';document.getElementById('varMethod').value='Pix';save()}
 function addInvestment(){let n=document.getElementById('invName').value.trim(),t=document.getElementById('invType').value.trim(),v=+document.getElementById('invValue').value||0,dt=document.getElementById('invDate').value||current+'-01';if(!n||!v)return;data().investments.push({id:id(),name:n,type:t,value:v,date:dt});document.getElementById('invName').value='';document.getElementById('invType').value='';document.getElementById('invValue').value='';document.getElementById('invDate').value='';save()} 
-function toggle(type,i){data()[type][i].paid=!data()[type][i].paid;save()}
+
+let editing=null;
+
+function escAttr(v){return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function field(label,id,type,value,extra=''){
+  return `<label>${label}<input id="${id}" type="${type}" value="${escAttr(value)}" ${extra}></label>`;
+}
+
+function openEdit(type,i){
+  const item=data()[type][i];
+  if(!item)return;
+  editing={type,i};
+  const title={receivables:'Editar valor a receber',bills:'Editar conta a pagar',cards:'Editar cartão',variables:'Editar despesa variável',investments:'Editar investimento'}[type]||'Editar';
+  document.getElementById('editTitle').textContent=title;
+  let fields='';
+
+  if(type==='receivables'){
+    fields=
+      field('Nome','e_name','text',item.name)+
+      field('Valor (R$)','e_value','number',item.value,'step="0.01" min="0"')+
+      field('Data de recebimento','e_date','date',item.paymentDate||'')+
+      `<label>Status<select id="e_status"><option value="pending" ${!item.received?'selected':''}>Pendente</option><option value="received" ${item.received?'selected':''}>Recebido</option></select></label>`;
+  } else if(type==='bills'){
+    fields=
+      field('Nome da conta','e_name','text',item.name)+
+      field('Valor (R$)','e_value','number',item.value,'step="0.01" min="0"')+
+      field('Dia do vencimento','e_due','number',item.due||'','min="1" max="31"')+
+      field('Data em que foi pago','e_date','date',item.paymentDate||'')+
+      `<label>Status<select id="e_status"><option value="pending" ${!item.paid?'selected':''}>Pendente</option><option value="paid" ${item.paid?'selected':''}>Pago</option></select></label>`;
+  } else if(type==='cards'){
+    fields=
+      field('Instituição financeira','e_bank','text',item.bank)+
+      field('Nome/descrição','e_name','text',item.name)+
+      field('Valor da fatura (R$)','e_value','number',item.value,'step="0.01" min="0"')+
+      field('Dia do vencimento','e_due','number',item.due||'','min="1" max="31"')+
+      field('Data em que foi pago','e_date','date',item.paymentDate||'')+
+      `<label>Status<select id="e_status"><option value="pending" ${!item.paid?'selected':''}>Pendente</option><option value="paid" ${item.paid?'selected':''}>Pago</option></select></label>`;
+  } else if(type==='variables'){
+    fields=
+      field('Descrição','e_name','text',item.name)+
+      field('Categoria','e_category','text',item.category||'')+
+      field('Valor (R$)','e_value','number',item.value,'step="0.01" min="0"')+
+      field('Data do pagamento','e_date','date',item.paymentDate||'')+
+      `<label>Forma de pagamento<select id="e_method"><option ${item.method==='Pix'?'selected':''}>Pix</option><option ${item.method==='Débito'?'selected':''}>Débito</option><option ${item.method==='Dinheiro'?'selected':''}>Dinheiro</option></select></label>`;
+  } else if(type==='investments'){
+    fields=
+      field('Nome do investimento','e_name','text',item.name)+
+      field('Tipo','e_type','text',item.type||'')+
+      field('Valor (R$)','e_value','number',item.value,'step="0.01" min="0"')+
+      field('Data do investimento','e_date','date',item.date||'');
+  }
+
+  document.getElementById('editFields').innerHTML=fields;
+  document.getElementById('editOverlay').style.display='flex';
+}
+
+function closeEdit(){
+  document.getElementById('editOverlay').style.display='none';
+  editing=null;
+}
+
+function val(id){const el=document.getElementById(id);return el?el.value:''}
+
+function saveEdit(){
+  if(!editing)return;
+  const {type,i}=editing, item=data()[type][i];
+  if(!item)return closeEdit();
+
+  const name=val('e_name').trim();
+  const value=Number(val('e_value'))||0;
+  if(!name || value<=0){alert('Informe o nome e um valor válido.');return;}
+
+  if(type==='receivables'){
+    item.name=name; item.value=value; item.paymentDate=val('e_date'); item.received=val('e_status')==='received';
+  } else if(type==='bills'){
+    item.name=name; item.value=value; item.due=Number(val('e_due'))||0; item.paymentDate=val('e_date'); item.paid=val('e_status')==='paid';
+  } else if(type==='cards'){
+    const bank=val('e_bank').trim();
+    if(!bank){alert('Informe a instituição financeira.');return;}
+    item.bank=bank; item.name=name; item.value=value; item.due=Number(val('e_due'))||0; item.paymentDate=val('e_date'); item.paid=val('e_status')==='paid';
+  } else if(type==='variables'){
+    item.name=name; item.category=val('e_category').trim(); item.value=value; item.method=val('e_method'); item.paymentDate=val('e_date');
+  } else if(type==='investments'){
+    item.name=name; item.type=val('e_type').trim(); item.value=value; item.date=val('e_date')||current+'-01';
+  }
+
+  closeEdit();
+  save();
+}
+
+// Mantém compatibilidade caso algum botão antigo ainda chame editItem.
+function editItem(type,i){openEdit(type,i)}
 function toggleRecv(i){data().receivables[i].received=!data().receivables[i].received;save()}
 function del(type,i){data()[type].splice(i,1);save()}
 async function clearMonth(){if(!confirm('Apagar todos os dados deste mês?'))return; delete db[current]; saveLocal(); render(); if(cloudReady){const {data:{user}}=await sb.auth.getUser(); if(user){await sb.from('finance_months').delete().eq('user_id',user.id).eq('month_key',current);}}}
@@ -381,17 +481,29 @@ function render(){
  const bc=document.getElementById('balance');bc.textContent=money(bal);bc.className='value '+(bal>=0?'positive':'negative');
  const mi=document.getElementById('missing');mi.textContent=money(missing);mi.className='value '+(missing?'negative':'positive');
  const pp=document.getElementById('pendingPay');pp.textContent=money(pendingPay);pp.className='value '+(pendingPay?'negative':'positive');
- document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 70px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
- document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 70px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
- document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
- document.getElementById('variables').innerHTML=d.variables.length?d.variables.map((x,i)=>`<div class="variable-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.category||'Sem categoria')}</div></div><div>${money(x.value)}</div><div class="small">${esc(x.method)}</div><div></div><button class="danger" onclick="del('variables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma despesa variável cadastrada.</div>';
+ document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 90px 75px 75px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="secondary" onclick="openEdit('receivables',${i})">Editar</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
+ document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 75px 75px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="secondary" onclick="openEdit('bills',${i})">Editar</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
+ document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="secondary" onclick="openEdit('cards',${i})">Editar</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
+ document.getElementById('variables').innerHTML=d.variables.length?d.variables.map((x,i)=>`<div class="variable-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.category||'Sem categoria')}</div></div><div>${money(x.value)}</div><div class="small">${esc(x.method)}</div><div></div><button class="secondary" onclick="openEdit('variables',${i})">Editar</button><button class="danger" onclick="del('variables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma despesa variável cadastrada.</div>';
  const pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0), inv=d.investments.reduce((s,x)=>s+x.value,0);
- document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
+ document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="secondary" onclick="openEdit('investments',${i})">Editar</button><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
  drawCharts(d);
  document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Contas fixas: ${money(bills)} · Cartões: ${money(cards)} · Despesas variáveis: ${money(vars)} · Investimentos: ${money(inv)}<br>Total de compromissos: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar (contas + cartões): ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 setupMonths();render();initAuth();
 </script>
+
+<div id="editOverlay" class="edit-overlay" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-modal">
+    <h2 id="editTitle">Editar</h2>
+    <div id="editFields" class="edit-fields"></div>
+    <div class="edit-actions">
+      <button class="secondary" type="button" onclick="closeEdit()">Cancelar</button>
+      <button type="button" onclick="saveEdit()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
