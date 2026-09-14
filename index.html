@@ -18,7 +18,7 @@
   button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:600}
   button.secondary{background:#eef1f7;color:#273142}.danger{background:#fff0f0!important;color:var(--red)!important}
   main{max-width:1200px;margin:24px auto;padding:0 18px}
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:17px}
   .label{font-size:13px;color:var(--muted)}.value{font-size:24px;font-weight:700;margin-top:7px}
   .positive{color:var(--green)}.negative{color:var(--red)}.warning{color:var(--yellow)}
@@ -60,7 +60,7 @@
 <body>
 <header>
   <div class="top">
-    <div><h1>Meu Controle Financeiro</h1><div class="sub">Salário + vale convertido + receitas extras − contas − cartões</div></div>
+    <div><h1>Meu Controle Financeiro</h1><div class="sub">Salário + vale convertido + receitas extras − contas − cartões − despesas variáveis</div></div>
     <div class="month"><button class="secondary" onclick="changeMonth(-1)">‹</button><select id="month"></select><button class="secondary" onclick="changeMonth(1)">›</button></div>
   </div>
 </header>
@@ -86,8 +86,9 @@
   <div class="grid">
     <div class="card"><div class="label">Receita prevista</div><div id="income" class="value">R$ 0,00</div></div>
     <div class="card"><div class="label">Contas + cartões</div><div id="expenses" class="value">R$ 0,00</div></div>
-    <div class="card"><div class="label">Saldo previsto</div><div id="balance" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Saldo previsto que irá sobrar</div><div id="balance" class="value">R$ 0,00</div></div>
     <div class="card"><div class="label">Falta para fechar o mês</div><div id="missing" class="value">R$ 0,00</div></div>
+    <div class="card"><div class="label">Total de contas a pagar</div><div id="pendingPay" class="value">R$ 0,00</div><div class="small" style="margin-top:6px">Sai daqui somente quando marcar como pago.</div></div>
   </div>
 
   <div class="section card">
@@ -374,18 +375,20 @@ function render(){
  const recv=d.receivables.reduce((s,x)=>s+(x.received?x.value:0),0);
  const base=(d.salary||0)+(d.valeConvert||0)+(d.otherIncome||0)+recv;
  const bills=d.bills.reduce((s,x)=>s+x.value,0),cards=d.cards.reduce((s,x)=>s+x.value,0),vars=(d.variables||[]).reduce((s,x)=>s+x.value,0),exp=bills+cards+vars,bal=base-exp,missing=Math.max(0,-bal);
+ const pendingPay=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0);
  const inc=document.getElementById('income');inc.textContent=money(base);inc.className='value '+(base?'positive':'');
- document.getElementById('expenses').textContent=money(exp);
+ document.getElementById('expenses').textContent=money(bills+cards);
  const bc=document.getElementById('balance');bc.textContent=money(bal);bc.className='value '+(bal>=0?'positive':'negative');
  const mi=document.getElementById('missing');mi.textContent=money(missing);mi.className='value '+(missing?'negative':'positive');
+ const pp=document.getElementById('pendingPay');pp.textContent=money(pendingPay);pp.className='value '+(pendingPay?'negative':'positive');
  document.getElementById('receivables').innerHTML=d.receivables.length?d.receivables.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 100px 70px"><div class="name">${esc(x.name)}</div><div>${money(x.value)}</div><div class="status ${x.received?'paid':'pending'}">${x.received?'Recebido':'Pendente'}</div><button class="secondary" onclick="toggleRecv(${i})">${x.received?'Desfazer':'Recebi'}</button><button class="danger" onclick="del('receivables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum valor a receber cadastrado.</div>';
  document.getElementById('bills').innerHTML=d.bills.length?d.bills.map((x,i)=>`<div class="row" style="grid-template-columns:1.5fr 1fr 70px 100px 70px"><div class="name">${esc(x.name)}<div class="small">Venc.: dia ${x.due||'—'}</div></div><div>${money(x.value)}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('bills',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('bills',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma conta fixa cadastrada.</div>';
  document.getElementById('cards').innerHTML=d.cards.length?d.cards.map((x,i)=>`<div class="row cardrow"><div class="name">${esc(x.bank)}</div><div>${esc(x.name)}</div><div>${money(x.value)}</div><div class="small">Dia ${x.due||'—'}</div><div class="status ${x.paid?'paid':'pending'}">${x.paid?'Pago':'Pendente'}</div><button class="secondary" onclick="toggle('cards',${i})">${x.paid?'Desfazer':'Pago'}</button><button class="danger" onclick="del('cards',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma fatura cadastrada.</div>';
  document.getElementById('variables').innerHTML=d.variables.length?d.variables.map((x,i)=>`<div class="variable-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.category||'Sem categoria')}</div></div><div>${money(x.value)}</div><div class="small">${esc(x.method)}</div><div></div><button class="danger" onclick="del('variables',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhuma despesa variável cadastrada.</div>';
- const pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+(d.variables||[]).reduce((s,x)=>s+x.value,0), inv=d.investments.reduce((s,x)=>s+x.value,0);
+ const pendingRecv=d.receivables.filter(x=>!x.received).reduce((s,x)=>s+x.value,0), pendingExp=d.bills.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0)+d.cards.filter(x=>!x.paid).reduce((s,x)=>s+x.value,0), inv=d.investments.reduce((s,x)=>s+x.value,0);
  document.getElementById('investments').innerHTML=d.investments.length?d.investments.map((x,i)=>`<div class="investment-row"><div class="name">${esc(x.name)}<div class="small">${esc(x.type||'Sem tipo')}</div></div><div>${money(x.value)}</div><div class="small">${new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR')}</div><div></div><button class="danger" onclick="del('investments',${i})">Excluir</button></div>`).join(''):'<div class="empty">Nenhum investimento cadastrado neste mês.</div>';
  drawCharts(d);
- document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Contas fixas: ${money(bills)} · Cartões: ${money(cards)} · Despesas variáveis: ${money(vars)} · Investimentos: ${money(inv)}<br>Total de compromissos: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar/contabilizar: ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
+ document.getElementById('summary').innerHTML=`<b>${monthName(current)}</b><br>Salário fixo: ${money(d.salary)} · Vale convertido: ${money(d.valeConvert)} · Outras receitas: ${money(d.otherIncome)} · Recebido de terceiros: ${money(recv)}<br>Contas fixas: ${money(bills)} · Cartões: ${money(cards)} · Despesas variáveis: ${money(vars)} · Investimentos: ${money(inv)}<br>Total de compromissos: ${money(exp)} · Ainda a receber: ${money(pendingRecv)} · Ainda a pagar (contas + cartões): ${money(pendingExp)}<br><br><b>${bal>=0?'Você fecha o mês com sobra de '+money(bal):'Você precisa de mais '+money(Math.abs(bal))+' para cobrir tudo que foi cadastrado.'}</b>`;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 setupMonths();render();initAuth();
